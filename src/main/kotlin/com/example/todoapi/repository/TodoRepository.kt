@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface TodoRepository : JpaRepository<Todo, Long> {
-    fun findByCompleted(completed: Boolean) : List<Todo>
+    fun findByCompleted(completed: Boolean): List<Todo>
 }

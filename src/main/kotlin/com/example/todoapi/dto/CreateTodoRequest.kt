@@ -16,11 +16,12 @@ data class CreateTodoRequest(
     val priority: Priority? = null,
 )
 
-fun CreateTodoRequest.toModel(): TodoModel = TodoModel(
-    title = this.title,
-    description = this.description,
-    completed = this.completed ?: false,
-    priority = this.priority ?: Priority.MEDIUM,
-    createdAt = LocalDateTime.now(),
-    updatedAt = LocalDateTime.now()
-)
+fun CreateTodoRequest.toModel(): TodoModel =
+    TodoModel(
+        title = this.title,
+        description = this.description,
+        completed = this.completed ?: false,
+        priority = this.priority ?: Priority.MEDIUM,
+        createdAt = LocalDateTime.now(),
+        updatedAt = LocalDateTime.now(),
+    )

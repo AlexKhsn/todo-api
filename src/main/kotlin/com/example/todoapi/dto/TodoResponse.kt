@@ -14,12 +14,13 @@ data class TodoResponse(
     val updatedAt: LocalDateTime,
 )
 
-fun Todo.toResponse(): TodoResponse = TodoResponse(
-    id = this.id!!,
-    title = this.title,
-    description = this.description,
-    completed = this.completed,
-    priority = this.priority,
-    createdAt = this.createdAt,
-    updatedAt = this.updatedAt,
-)
+fun Todo.toResponse(): TodoResponse =
+    TodoResponse(
+        id = this.id!!,
+        title = this.title,
+        description = this.description,
+        completed = this.completed,
+        priority = this.priority,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
+    )

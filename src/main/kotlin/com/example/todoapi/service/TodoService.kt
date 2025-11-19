@@ -3,6 +3,7 @@ package com.example.todoapi.service
 import com.example.todoapi.dto.CreateTodoRequest
 import com.example.todoapi.dto.UpdateTodoRequest
 import com.example.todoapi.dto.toModel
+import com.example.todoapi.exception.CustomExceptions.TodoNotFoundException
 import com.example.todoapi.models.TodoModel
 import com.example.todoapi.models.toEntity
 import com.example.todoapi.models.toModel
@@ -24,7 +25,7 @@ class TodoService(
     fun getTodoById(id: Long): TodoModel {
         val foundEntity =
             todoRepository.findById(id).orElseThrow {
-                NoSuchElementException("No Todo found with id $id")
+                TodoNotFoundException(id)
             }
 
         return foundEntity.toModel()

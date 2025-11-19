@@ -1,5 +1,6 @@
 package com.example.todoapi.exception
 
+import com.example.todoapi.exception.CustomExceptions.TodoNotFoundException
 import java.time.LocalDateTime
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -59,6 +60,23 @@ class GlobalExceptionHandler {
                     .joinToString("; ") { "${it.field}: ${it.defaultMessage}" },
             request = request,
         )
+    }
+
+    @ExceptionHandler(TodoNotFoundException::class)
+    fun handleTodoNotFoundException(
+        e: TodoNotFoundException,
+        request: WebRequest,
+    ): ResponseEntity<ErrorResponse> {
+        val error =
+            ErrorResponse(
+                status = HttpStatus.NOT_FOUND.value(),
+                error = e.customError,
+                message = e.message,
+                path = request.getDescription(false).replace("uri=", ""),
+                timestamp = LocalDateTime.now(),
+            )
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error)
     }
 
     fun createErrorResponse(

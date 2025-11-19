@@ -47,6 +47,15 @@ class TodoService(
     ): TodoModel {
         val foundModel = getTodoById(id)
 
+        if (
+            request.title == null &&
+            request.description == null &&
+            request.completed == null &&
+            request.priority == null
+        ) {
+            return foundModel
+        }
+
         if (request.title != null && request.title.isBlank()) throw IllegalArgumentException("Title must not be empty!")
 
         val updatedModel =

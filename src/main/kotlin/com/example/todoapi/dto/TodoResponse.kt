@@ -2,6 +2,7 @@ package com.example.todoapi.dto
 
 import com.example.todoapi.entity.Priority
 import com.example.todoapi.entity.Todo
+import com.example.todoapi.models.TodoModel
 import java.time.LocalDateTime
 
 data class TodoResponse(
@@ -15,6 +16,17 @@ data class TodoResponse(
 )
 
 fun Todo.toResponse(): TodoResponse =
+    TodoResponse(
+        id = this.id!!,
+        title = this.title,
+        description = this.description,
+        completed = this.completed,
+        priority = this.priority,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
+    )
+
+fun TodoModel.toResponse(): TodoResponse =
     TodoResponse(
         id = this.id!!,
         title = this.title,

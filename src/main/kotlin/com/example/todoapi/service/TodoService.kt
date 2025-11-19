@@ -45,6 +45,9 @@ class TodoService(
         request: UpdateTodoRequest,
     ): TodoModel {
         val foundModel = getTodoById(id)
+
+        if (request.title != null && request.title.isBlank()) throw IllegalArgumentException("Title must not be empty!")
+
         val updatedModel =
             foundModel.copy(
                 title = request.title ?: foundModel.title,

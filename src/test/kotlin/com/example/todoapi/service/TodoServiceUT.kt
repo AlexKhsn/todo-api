@@ -191,6 +191,58 @@ class TodoServiceUT : FunSpec({
         verify(exactly = 1) { mockRepository.findByCompleted(true) }
     }
 
+    test("Should throw exception when update by existing ID and blank title in request") {
+        // ARRANGE
+        val existingId = 1L
+        val updateRequest =
+            UpdateTodoRequest(
+                title = " ",
+                description = null,
+                completed = null,
+                priority = null,
+            )
+
+        //  ACT
+        val exception =
+            shouldThrow<IllegalArgumentException> {
+                service.updateTodo(existingId, updateRequest)
+            }
+
+        //  ASSERT
+        exception.message shouldBe "Title must not be empty!"
+
+        //  VERIFY
+        verify(exactly = 0) { mockRepository.findById(existingId) }
+        verify(exactly = 0) { mockRepository.save(any()) }
+    }
+
+    test("Should throw exception when update by non-existing ID") {
+        //  ARRANGE
+        val nonExistingId = 1L
+        val updateFilledRequest =
+            UpdateTodoRequest(
+                title = "updated test title",
+                description = "updated test description",
+                completed = true,
+                priority = Priority.LOW,
+            )
+
+        every { mockRepository.findById(nonExistingId) } returns Optional.empty()
+
+        //  ACT
+        val exception =
+            shouldThrow<TodoNotFoundException> {
+                service.updateTodo(nonExistingId, updateFilledRequest)
+            }
+
+        //  ASSERT
+        exception.message shouldBe "Todo with id: $nonExistingId not found"
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findById(nonExistingId) }
+        verify(exactly = 0) { mockRepository.save(any()) }
+    }
+
     test("Should update and return updated model when update by existing ID and filled request") {
         //  ARRANGE
         val existingId = 1L
@@ -231,5 +283,190 @@ class TodoServiceUT : FunSpec({
         //  VERIFY
         verify(exactly = 1) { mockRepository.findById(existingId) }
         verify(exactly = 1) { mockRepository.save(any()) }
+    }
+
+    test("Should update and return updated model when update by existing ID and half-filled request") {
+        //  ARRANGE
+        val existingId = 1L
+        val foundEntity = TestDataBuilder.entitySavedDefault()
+        val foundModel = foundEntity.toModel()
+        val requestHalfFilled =
+            UpdateTodoRequest(
+                title = "updated test title",
+                description = null,
+                completed = null,
+                priority = null,
+            )
+        val updatedEntity =
+            foundModel.copy(
+                title = requestHalfFilled.title!!,
+                updatedAt = LocalDateTime.now(),
+            ).toEntity()
+
+        every { mockRepository.findById(existingId) } returns Optional.of(foundEntity)
+        every { mockRepository.save(any()) } returns updatedEntity
+
+        //  ACT
+        val result = service.updateTodo(existingId, requestHalfFilled)
+
+        //  ASSERT
+        result.id shouldBe foundEntity.id
+        result.description shouldBe foundEntity.description
+        result.completed shouldBe foundEntity.completed
+        result.priority shouldBe foundEntity.priority
+        result.createdAt shouldBe foundEntity.createdAt
+
+        result.title shouldBe requestHalfFilled.title
+        result.updatedAt shouldBe updatedEntity.updatedAt
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findById(existingId) }
+        verify(exactly = 1) { mockRepository.save(any()) }
+    }
+
+    test("Should not update and return founded model when update by existing ID and non-filled request") {
+        //  ARRANGE
+        val existingId = 1L
+        val foundedEntity = TestDataBuilder.entitySavedDefault()
+        val updateEmptyRequest =
+            UpdateTodoRequest(
+                title = null,
+                description = null,
+                completed = null,
+                priority = null,
+            )
+
+        every { mockRepository.findById(existingId) } returns Optional.of(foundedEntity)
+
+        //  ACT
+        val result = service.updateTodo(existingId, updateEmptyRequest)
+
+        //  ASSERT
+        result.id shouldBe foundedEntity.id
+        result.title shouldBe foundedEntity.title
+        result.description shouldBe foundedEntity.description
+        result.completed shouldBe foundedEntity.completed
+        result.priority shouldBe foundedEntity.priority
+        result.createdAt shouldBe foundedEntity.createdAt
+        result.updatedAt shouldBe foundedEntity.updatedAt
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findById(existingId) }
+        verify(exactly = 0) { mockRepository.save(any()) }
+    }
+
+    test("Should toggle todo complete to true when it's false and return updated model") {
+        //  ARRANGE
+        val existingId = 1L
+        val foundedEntity = TestDataBuilder.entitySavedDefault()
+        val model = foundedEntity.toModel()
+        val updatedEntity =
+            model.copy(
+                completed = true,
+                updatedAt = LocalDateTime.now(),
+            ).toEntity()
+
+        every { mockRepository.findById(existingId) } returns Optional.of(foundedEntity)
+        every { mockRepository.save(any()) } returns updatedEntity
+
+        //  ACT
+        val result = service.toggleComplete(existingId)
+
+        //  ASSERT
+        result.completed shouldBe true
+        result.updatedAt shouldBe updatedEntity.updatedAt
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findById(existingId) }
+        verify(exactly = 1) { mockRepository.save(any()) }
+    }
+
+    test("Should toggle todo complete to false when it's true and return updated model") {
+        //  ARRANGE
+        val existingId = 1L
+        val foundedEntity = TestDataBuilder.entitySavedFilled()
+        val model = foundedEntity.toModel()
+        val updatedEntity =
+            model.copy(
+                completed = false,
+                updatedAt = LocalDateTime.now(),
+            ).toEntity()
+
+        every { mockRepository.findById(existingId) } returns Optional.of(foundedEntity)
+        every { mockRepository.save(any()) } returns updatedEntity
+
+        //  ACT
+        val result = service.toggleComplete(existingId)
+
+        //  ASSERT
+        result.completed shouldBe false
+        result.updatedAt shouldBe updatedEntity.updatedAt
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findById(existingId) }
+        verify(exactly = 1) { mockRepository.save(any()) }
+    }
+
+    test("Should throw exception when toggle todo completed by non-existing ID") {
+        //  ARRANGE
+        val nonExistingId = 1L
+        every { mockRepository.findById(nonExistingId) } returns Optional.empty()
+
+        //  ACT
+        val exception =
+            shouldThrow<TodoNotFoundException> {
+                service.toggleComplete(nonExistingId)
+            }
+
+        //  ASSERT
+        exception.message shouldBe "Todo with id: $nonExistingId not found"
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findById(nonExistingId) }
+        verify(exactly = 0) { mockRepository.save(any()) }
+    }
+
+    test("Should delete todo and return it by existing ID") {
+        //  ARRANGE
+        val existingId = 1L
+        val foundedEntity = TestDataBuilder.entitySavedDefault()
+
+        every { mockRepository.findById(existingId) } returns Optional.of(foundedEntity)
+        every { mockRepository.deleteById(existingId) } returns Unit
+
+        //  ACT
+        val result = service.deleteTodo(existingId)
+
+        //  ASSERT
+        result.id shouldBe foundedEntity.id
+        result.title shouldBe foundedEntity.title
+        result.description shouldBe foundedEntity.description
+        result.completed shouldBe foundedEntity.completed
+        result.priority shouldBe foundedEntity.priority
+        result.createdAt shouldBe foundedEntity.createdAt
+        result.updatedAt shouldBe foundedEntity.updatedAt
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findById(existingId) }
+        verify(exactly = 1) { mockRepository.deleteById(existingId) }
+    }
+
+    test("Should throw exception when delete todo by non-existing ID") {
+        //  ARRANGE
+        val nonExistingId = 1L
+        every { mockRepository.findById(nonExistingId) } returns Optional.empty()
+
+        //  ACT
+        val exception =
+            shouldThrow<TodoNotFoundException> {
+                service.deleteTodo(nonExistingId)
+            }
+
+        //  ASSERT
+        exception.message shouldBe "Todo with id: $nonExistingId not found"
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findById(nonExistingId) }
+        verify(exactly = 0) { mockRepository.deleteById(nonExistingId) }
     }
 })

@@ -6,27 +6,26 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import jakarta.validation.Validation
 
-class CreateTodoRequestValidationTest : FunSpec({
+class UpdateTodoRequestValidationTest : FunSpec({
     val validator = Validation.buildDefaultValidatorFactory().validator
 
     test("Should throw exception when title is blank") {
         //  ARRANGE
-        val request = TestDataBuilder.requestDefault(title = "")
+        val request = UpdateTodoRequest(title = "")
 
         //  ACT
         val violations = validator.validate(request)
 
         //  ASSERT
         violations.isNotEmpty()
-        violations.all { it.propertyPath.toString().contains("title") } shouldBe true
-        violations.find { it.message.contains("Title must not be empty") } shouldNotBe null
-        violations.find { it.message.contains("Title size should be between 1 and 100") } shouldNotBe null
+        violations.size shouldBe 1
+        violations.first().message shouldBe "Title size should be between 1 and 100"
     }
 
-    test("Should throw exception when title is longer than 100") {
+    test("Should throw exception when title is more than 100") {
         //  ARRANGE
         val request =
-            TestDataBuilder.requestDefault(
+            UpdateTodoRequest(
                 title = TestDataBuilder.longText,
             )
 
@@ -42,7 +41,8 @@ class CreateTodoRequestValidationTest : FunSpec({
     test("Should throw exception when description is longer than 500") {
         //  ARRANGE
         val request =
-            TestDataBuilder.requestDefault(
+            UpdateTodoRequest(
+                title = "test",
                 description = TestDataBuilder.longText,
             )
 
@@ -58,7 +58,7 @@ class CreateTodoRequestValidationTest : FunSpec({
     test("Should throw exception when title and description are not valid") {
         //  ARRANGE
         val request =
-            TestDataBuilder.requestDefault(
+            UpdateTodoRequest(
                 title = "",
                 description = TestDataBuilder.longText,
             )
@@ -68,33 +68,21 @@ class CreateTodoRequestValidationTest : FunSpec({
 
         //  ASSERT
         violations.isNotEmpty()
-        violations.size shouldBe 3
+        violations.size shouldBe 2
         violations.any { it.propertyPath.toString() == "title" } shouldBe true
         violations.any { it.propertyPath.toString() == "description" } shouldBe true
-        violations.find { it.message == "Title must not be empty!" } shouldNotBe null
         violations.find { it.message == "Title size should be between 1 and 100" } shouldNotBe null
         violations.find { it.message == "Description max size should be 500" } shouldNotBe null
     }
 
-    test("Should validate successfully with fully filled request") {
+    test("Should validate successfully when all fields are null") {
         //  ARRANGE
-        val request = TestDataBuilder.requestFilled()
+        val request = UpdateTodoRequest()
 
         //  ACT
         val violations = validator.validate(request)
 
         //  ASSERT
-        violations.isEmpty()
-    }
-
-    test("Should validate successfully with half-filled request") {
-        //  ARRANGE
-        val request = TestDataBuilder.requestDefault()
-
-        //  ACT
-        val violations = validator.validate(request)
-
-        //  ASSERT
-        violations.isEmpty()
+        violations.size shouldBe 0
     }
 })

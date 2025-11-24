@@ -19,13 +19,11 @@ class TodoController(
         return ResponseEntity.status(HttpStatus.CREATED).body(createdModel.toResponse())
     }
 
-    override fun getAllTodos(completed: Boolean?): ResponseEntity<List<TodoResponse>> {
-        val foundModels =
-            if (completed != null) {
-                todoService.getAllTodosByCompleted(completed)
-            } else {
-                todoService.getAllTodos()
-            }
+    override fun getAllTodos(
+        completed: Boolean?,
+        subtitle: String?,
+    ): ResponseEntity<List<TodoResponse>> {
+        val foundModels = todoService.getTodos(completed, subtitle)
         return ResponseEntity.status(HttpStatus.OK).body(foundModels.map { it.toResponse() })
     }
 

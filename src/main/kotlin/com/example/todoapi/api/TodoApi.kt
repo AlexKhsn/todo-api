@@ -38,7 +38,9 @@ interface TodoApi {
     @GetMapping
     fun getAllTodos(
         @RequestParam(required = false)
-        completed: Boolean?,
+        completed: Boolean? = null,
+        @RequestParam(required = false)
+        subtitle: String? = null,
     ): ResponseEntity<List<TodoResponse>>
 
     @Operation(

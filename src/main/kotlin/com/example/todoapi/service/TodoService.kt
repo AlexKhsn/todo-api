@@ -31,13 +31,11 @@ class TodoService(
         return foundEntity.toModel()
     }
 
-    fun getAllTodos(): List<TodoModel> {
-        val foundEntities = todoRepository.findAll()
-        return foundEntities.map { it.toModel() }
-    }
-
-    fun getAllTodosByCompleted(completed: Boolean): List<TodoModel> {
-        val foundEntities = todoRepository.findByCompleted(completed)
+    fun getTodos(
+        completed: Boolean?,
+        subtitle: String?,
+    ): List<TodoModel> {
+        val foundEntities = todoRepository.findWithFilters(completed, subtitle)
         return foundEntities.map { it.toModel() }
     }
 

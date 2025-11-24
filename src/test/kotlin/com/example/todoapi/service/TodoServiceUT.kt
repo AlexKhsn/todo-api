@@ -122,7 +122,7 @@ class TodoServiceUT : FunSpec({
         every { mockRepository.findAll() } returns entities
 
         //  ACT
-        val result = service.getAllTodos()
+        val result = service.getTodos()
 
         //  ASSERT
         result shouldNotBe emptyList<TodoModel>()
@@ -146,7 +146,7 @@ class TodoServiceUT : FunSpec({
         every { mockRepository.findAll() } returns emptyList()
 
         //  ACT
-        val result = service.getAllTodos()
+        val result = service.getTodos()
 
         //  ASSERT
         result shouldBe emptyList<TodoModel>()

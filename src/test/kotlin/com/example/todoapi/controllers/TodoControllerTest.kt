@@ -32,7 +32,7 @@ class TodoControllerTest : FunSpec() {
     init {
         test("GET /api/todos should route to getAllTodos method") {
             //  ARRANGE
-            whenever(todoService.getAllTodos()).thenReturn(emptyList())
+            whenever(todoService.getTodos()).thenReturn(emptyList())
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos"))

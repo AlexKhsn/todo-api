@@ -5,6 +5,8 @@ import com.example.todoapi.dto.TodoResponse
 import com.example.todoapi.dto.UpdateTodoRequest
 import com.example.todoapi.dto.toResponse
 import com.example.todoapi.service.TodoService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -19,11 +21,16 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
+@Tag(name = "Todo API", description = "API для управления задачами")
 @RestController
 @RequestMapping("/api/todos")
 class TodoController(
     private val todoService: TodoService,
 ) {
+    @Operation(
+        summary = "Create a new task",
+        description = "Create a new task with entered/default data",
+    )
     @PostMapping
     fun createNewToDo(
         @RequestBody
@@ -34,6 +41,10 @@ class TodoController(
         return ResponseEntity.status(HttpStatus.CREATED).body(createdModel.toResponse())
     }
 
+    @Operation(
+        summary = "Get all existing tasks",
+        description = "Get all existing tasks (filtered / non-filtered)",
+    )
     @GetMapping
     fun getAllTodos(
         @RequestParam(required = false)
@@ -48,6 +59,10 @@ class TodoController(
         return ResponseEntity.status(HttpStatus.OK).body(foundModels.map { it.toResponse() })
     }
 
+    @Operation(
+        summary = "Get task by ID",
+        description = "Get existing task by ID or Exception",
+    )
     @GetMapping("/{id}")
     fun getTodoById(
         @PathVariable
@@ -57,6 +72,10 @@ class TodoController(
         return ResponseEntity.status(HttpStatus.OK).body(foundModel.toResponse())
     }
 
+    @Operation(
+        summary = "Update task by ID",
+        description = "Update existing task and get it back or Exception",
+    )
     @PutMapping("/{id}")
     fun updateTodoById(
         @PathVariable
@@ -69,6 +88,10 @@ class TodoController(
         return ResponseEntity.status(HttpStatus.OK).body(updatedModel.toResponse())
     }
 
+    @Operation(
+        summary = "Change task status by ID",
+        description = "Change task status (completed / non-completed) by ID",
+    )
     @PatchMapping("/{id}/toggle")
     fun toggleTodoCompleted(
         @PathVariable
@@ -78,6 +101,10 @@ class TodoController(
         return ResponseEntity.status(HttpStatus.OK).body(toggledModel.toResponse())
     }
 
+    @Operation(
+        summary = "Delete task by ID",
+        description = "Delete existing task by ID and get it back or Exception",
+    )
     @DeleteMapping("/{id}")
     fun deleteTodoById(
         @PathVariable

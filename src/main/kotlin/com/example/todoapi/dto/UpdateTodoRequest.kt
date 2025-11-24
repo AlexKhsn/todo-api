@@ -8,7 +8,7 @@ data class UpdateTodoRequest(
     @field:Schema(description = "Task title", example = "Test task")
     @field:Size(min = 1, max = 100, message = "Title size should be between 1 and 100")
     val title: String? = null,
-    @field:Schema(description = "Task title", example = "Test description")
+    @field:Schema(description = "Task description", example = "Test description")
     @field:Size(max = 500, message = "Description max size should be 500")
     val description: String? = null,
     @field:Schema(description = "Task status", example = "true")

@@ -2,6 +2,7 @@ package com.example.todoapi.service
 
 import com.example.todoapi.dto.UpdateTodoRequest
 import com.example.todoapi.entity.Priority
+import com.example.todoapi.entity.Todo
 import com.example.todoapi.exception.CustomExceptions.TodoNotFoundException
 import com.example.todoapi.models.TodoModel
 import com.example.todoapi.models.toEntity
@@ -19,6 +20,8 @@ import io.mockk.mockk
 import io.mockk.verify
 import java.time.LocalDateTime
 import java.util.Optional
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 
 class TodoServiceUT : FunSpec({
     val mockRepository = mockk<TodoRepository>()
@@ -120,12 +123,13 @@ class TodoServiceUT : FunSpec({
     test("Should return a list of models when entities exist and no parameters passed") {
         //  ARRANGE
         val entities = TestDataBuilder.listOfEntities()
+        val page = PageImpl(entities, Pageable.unpaged(), entities.size.toLong())
         every {
             mockRepository.findWithFilters(
                 completed = null,
                 subtitle = null,
             )
-        } returns entities
+        } returns page
 
         //  ACT
         val result =
@@ -135,9 +139,9 @@ class TodoServiceUT : FunSpec({
             )
 
         //  ASSERT
-        result shouldNotBe emptyList<TodoModel>()
-        result.size shouldBe entities.size
-        result.forEachIndexed { index, model ->
+        result.content shouldNotBe emptyList<TodoModel>()
+        result.content.size shouldBe entities.size
+        result.content.forEachIndexed { index, model ->
             model.id shouldBe entities[index].id
             model.title shouldBe entities[index].title
             model.description shouldBe entities[index].description
@@ -148,17 +152,18 @@ class TodoServiceUT : FunSpec({
         }
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(any(), any()) }
+        verify(exactly = 1) { mockRepository.findWithFilters(any(), any(), any()) }
     }
 
     test("Should return an empty list when entities absent and no parameters passed") {
         //  ARRANGE
+        val page = PageImpl(emptyList<Todo>(), Pageable.unpaged(), 0)
         every {
             mockRepository.findWithFilters(
                 completed = null,
                 subtitle = null,
             )
-        } returns emptyList()
+        } returns page
 
         //  ACT
         val result =
@@ -168,8 +173,8 @@ class TodoServiceUT : FunSpec({
             )
 
         //  ASSERT
-        result shouldBe emptyList<TodoModel>()
-        result.size shouldBe 0
+        result.content shouldBe emptyList<TodoModel>()
+        result.content.size shouldBe 0
 
         //  VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(any(), any()) }
@@ -182,12 +187,13 @@ class TodoServiceUT : FunSpec({
                 TestDataBuilder.entitySavedFilled(),
                 TestDataBuilder.entitySavedFilled(id = 2L),
             )
+        val page = PageImpl(entities, Pageable.unpaged(), entities.size.toLong())
         every {
             mockRepository.findWithFilters(
                 completed = true,
                 subtitle = null,
             )
-        } returns entities
+        } returns page
 
         //  ACT
         val result =
@@ -197,8 +203,8 @@ class TodoServiceUT : FunSpec({
             )
 
         //  ASSERT
-        result.size shouldBe entities.size
-        result.onEach { model -> model.completed shouldBe true }
+        result.content.size shouldBe entities.size
+        result.content.onEach { model -> model.completed shouldBe true }
 
         //  VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(true, null) }
@@ -206,12 +212,13 @@ class TodoServiceUT : FunSpec({
 
     test("Should return an empty list when completed entities absent") {
         //  ARRANGE
+        val page = PageImpl(emptyList<Todo>(), Pageable.unpaged(), 0)
         every {
             mockRepository.findWithFilters(
                 completed = true,
                 subtitle = null,
             )
-        } returns emptyList()
+        } returns page
 
         //  ACT
         val result =
@@ -221,8 +228,8 @@ class TodoServiceUT : FunSpec({
             )
 
         //  ASSERT
-        result shouldBe emptyList<TodoModel>()
-        result.size shouldBe 0
+        result.content shouldBe emptyList<TodoModel>()
+        result.content.size shouldBe 0
 
         //  VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(true, null) }
@@ -235,12 +242,13 @@ class TodoServiceUT : FunSpec({
                 TestDataBuilder.entitySavedFilled(),
                 TestDataBuilder.entitySavedFilled(id = 2L),
             )
+        val page = PageImpl(entities, Pageable.unpaged(), entities.size.toLong())
         every {
             mockRepository.findWithFilters(
                 completed = null,
                 subtitle = "tEsT",
             )
-        } returns entities
+        } returns page
 
         //  ACT
         val result =
@@ -250,8 +258,8 @@ class TodoServiceUT : FunSpec({
             )
 
         //  ASSERT
-        result.size shouldBe entities.size
-        result.onEach { model -> model.title shouldContain "tEsT".lowercase() }
+        result.content.size shouldBe entities.size
+        result.content.onEach { model -> model.title shouldContain "tEsT".lowercase() }
 
         //  VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(null, "tEsT") }
@@ -259,12 +267,13 @@ class TodoServiceUT : FunSpec({
 
     test("Should return an empty list when no entities contain subtitle in titles") {
         //  ARRANGE
+        val page = PageImpl(emptyList<Todo>(), Pageable.unpaged(), 0)
         every {
             mockRepository.findWithFilters(
                 completed = null,
                 subtitle = "tEsT",
             )
-        } returns emptyList()
+        } returns page
 
         //  ACT
         val result =
@@ -274,8 +283,8 @@ class TodoServiceUT : FunSpec({
             )
 
         //  ASSERT
-        result shouldBe emptyList<TodoModel>()
-        result.size shouldBe 0
+        result.content shouldBe emptyList<TodoModel>()
+        result.content.size shouldBe 0
 
         //  VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(null, "tEsT") }
@@ -288,12 +297,13 @@ class TodoServiceUT : FunSpec({
                 TestDataBuilder.entitySavedFilled(),
                 TestDataBuilder.entitySavedFilled(id = 2L),
             )
+        val page = PageImpl(entities, Pageable.unpaged(), entities.size.toLong())
         every {
             mockRepository.findWithFilters(
                 completed = true,
                 subtitle = "tESt",
             )
-        } returns entities
+        } returns page
 
         //  ACT
         val result =
@@ -303,9 +313,9 @@ class TodoServiceUT : FunSpec({
             )
 
         //  ASSERT
-        result.size shouldBe entities.size
-        result.onEach { model -> model.completed shouldBe true }
-        result.onEach { model -> model.title shouldContain "tESt".lowercase() }
+        result.content.size shouldBe entities.size
+        result.content.onEach { model -> model.completed shouldBe true }
+        result.content.onEach { model -> model.title shouldContain "tESt".lowercase() }
 
         //  VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(true, "tESt") }
@@ -313,12 +323,13 @@ class TodoServiceUT : FunSpec({
 
     test("Should return an empty list when no completed entities contain subtitle in titles with 2 parameters") {
         //  ARRANGE
+        val page = PageImpl(emptyList<Todo>(), Pageable.unpaged(), 0)
         every {
             mockRepository.findWithFilters(
                 completed = true,
                 subtitle = "tEsT",
             )
-        } returns emptyList()
+        } returns page
 
         //  ACT
         val result =
@@ -328,8 +339,8 @@ class TodoServiceUT : FunSpec({
             )
 
         //  ASSERT
-        result shouldBe emptyList<TodoModel>()
-        result.size shouldBe 0
+        result.content shouldBe emptyList<TodoModel>()
+        result.content.size shouldBe 0
 
         //  VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(true, "tEsT") }

@@ -31,8 +31,8 @@ class TodoRepositoryIT {
         val result = repository.findWithFilters(true, null)
 
         //  ASSERT
-        result.size shouldBe 2
-        result.all { it.completed } shouldBe true
+        result.content.size shouldBe 2
+        result.content.all { it.completed } shouldBe true
     }
 
     @Test
@@ -51,8 +51,8 @@ class TodoRepositoryIT {
         val result = repository.findWithFilters(false, null)
 
         //  ASSERT
-        result.size shouldBe 1
-        result.all { it.completed } shouldBe false
+        result.content.size shouldBe 1
+        result.content.all { it.completed } shouldBe false
     }
 
     @Test
@@ -69,7 +69,7 @@ class TodoRepositoryIT {
         val result = repository.findWithFilters(true, null)
 
         //  ASSERT
-        result.isEmpty() shouldBe true
+        result.content.isEmpty() shouldBe true
     }
 
     @Test
@@ -86,7 +86,7 @@ class TodoRepositoryIT {
         val result = repository.findWithFilters(false, null)
 
         //  ASSERT
-        result.isEmpty() shouldBe true
+        result.content.isEmpty() shouldBe true
     }
 
     @Test
@@ -105,8 +105,8 @@ class TodoRepositoryIT {
         val result = repository.findWithFilters(null, "tESt")
 
         //  ASSERT
-        result.size shouldBe 2
-        result.all { it.title.contains("tESt".lowercase()) } shouldBe true
+        result.content.size shouldBe 2
+        result.content.all { it.title.contains("tESt".lowercase()) } shouldBe true
     }
 
     @Test
@@ -123,7 +123,7 @@ class TodoRepositoryIT {
         val result = repository.findWithFilters(null, "default")
 
         //  ASSERT
-        result.isEmpty() shouldBe true
+        result.content.isEmpty() shouldBe true
     }
 
     @Test
@@ -142,9 +142,9 @@ class TodoRepositoryIT {
         val result = repository.findWithFilters(true, "tESt")
 
         //  ASSERT
-        result.size shouldBe 2
-        result.all { it.completed } shouldBe true
-        result.all { it.title.contains("tESt".lowercase()) } shouldBe true
+        result.content.size shouldBe 2
+        result.content.all { it.completed } shouldBe true
+        result.content.all { it.title.contains("tESt".lowercase()) } shouldBe true
     }
 
     @Test
@@ -161,6 +161,6 @@ class TodoRepositoryIT {
         val result = repository.findWithFilters(true, "default")
 
         //  ASSERT
-        result.isEmpty() shouldBe true
+        result.content.isEmpty() shouldBe true
     }
 }

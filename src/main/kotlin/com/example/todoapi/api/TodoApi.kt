@@ -6,6 +6,9 @@ import com.example.todoapi.dto.UpdateTodoRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springdoc.core.annotations.ParameterObject
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -41,7 +44,8 @@ interface TodoApi {
         completed: Boolean? = null,
         @RequestParam(required = false)
         subtitle: String? = null,
-    ): ResponseEntity<List<TodoResponse>>
+        @ParameterObject pageable: Pageable = Pageable.unpaged(),
+    ): ResponseEntity<Page<TodoResponse>>
 
     @Operation(
         summary = "Get task by ID",

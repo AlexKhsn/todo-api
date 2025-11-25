@@ -9,6 +9,8 @@ import com.example.todoapi.models.toEntity
 import com.example.todoapi.models.toModel
 import com.example.todoapi.repository.TodoRepository
 import java.time.LocalDateTime
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 
 @Service
@@ -34,8 +36,9 @@ class TodoService(
     fun getTodos(
         completed: Boolean?,
         subtitle: String?,
-    ): List<TodoModel> {
-        val foundEntities = todoRepository.findWithFilters(completed, subtitle)
+        pageable: Pageable = Pageable.unpaged(),
+    ): Page<TodoModel> {
+        val foundEntities = todoRepository.findWithFilters(completed, subtitle, pageable)
         return foundEntities.map { it.toModel() }
     }
 

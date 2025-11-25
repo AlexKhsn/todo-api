@@ -1,17 +1,21 @@
 package com.example.todoapi.controllers
 
 import com.example.todoapi.exception.CustomExceptions
+import com.example.todoapi.models.TodoModel
 import com.example.todoapi.models.toModel
 import com.example.todoapi.service.TodoService
 import com.example.todoapi.testUtil.TestDataBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.FunSpec
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -32,7 +36,8 @@ class TodoControllerTest : FunSpec() {
     init {
         test("GET /api/todos should route to getTodos method") {
             //  ARRANGE
-            whenever(todoService.getTodos(null, null)).thenReturn(emptyList())
+            val page = PageImpl(emptyList<TodoModel>(), Pageable.unpaged(), 0)
+            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos"))
@@ -79,14 +84,15 @@ class TodoControllerTest : FunSpec() {
 
         test("GET /api/todos?completed=true should call correct service method") {
             //  ARRANGE
-            whenever(todoService.getTodos(true, null)).thenReturn(emptyList())
+            val page = PageImpl(emptyList<TodoModel>(), Pageable.unpaged(), 0)
+            whenever(todoService.getTodos(eq(true), eq(null), any())).thenReturn(page)
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos?completed=true"))
                 .andExpect(status().isOk)
 
             //  VERIFY
-            verify(todoService).getTodos(true, null)
+            verify(todoService).getTodos(eq(true), eq(null), any())
         }
     }
 }

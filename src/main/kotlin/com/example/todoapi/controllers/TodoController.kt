@@ -6,6 +6,8 @@ import com.example.todoapi.dto.TodoResponse
 import com.example.todoapi.dto.UpdateTodoRequest
 import com.example.todoapi.dto.toResponse
 import com.example.todoapi.service.TodoService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
@@ -22,8 +24,9 @@ class TodoController(
     override fun getAllTodos(
         completed: Boolean?,
         subtitle: String?,
-    ): ResponseEntity<List<TodoResponse>> {
-        val foundModels = todoService.getTodos(completed, subtitle)
+        pageable: Pageable,
+    ): ResponseEntity<Page<TodoResponse>> {
+        val foundModels = todoService.getTodos(completed, subtitle, pageable)
         return ResponseEntity.status(HttpStatus.OK).body(foundModels.map { it.toResponse() })
     }
 

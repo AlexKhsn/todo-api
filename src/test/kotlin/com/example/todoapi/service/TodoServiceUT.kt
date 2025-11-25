@@ -12,6 +12,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -116,13 +117,22 @@ class TodoServiceUT : FunSpec({
         verify(exactly = 1) { mockRepository.findById(nonExistingId) }
     }
 
-    test("Should return a list of models when entities exist") {
+    test("Should return a list of models when entities exist and no parameters passed") {
         //  ARRANGE
         val entities = TestDataBuilder.listOfEntities()
-        every { mockRepository.findAll() } returns entities
+        every {
+            mockRepository.findWithFilters(
+                completed = null,
+                subtitle = null,
+            )
+        } returns entities
 
         //  ACT
-        val result = service.getTodos()
+        val result =
+            service.getTodos(
+                completed = null,
+                subtitle = null,
+            )
 
         //  ASSERT
         result shouldNotBe emptyList<TodoModel>()
@@ -138,57 +148,191 @@ class TodoServiceUT : FunSpec({
         }
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findAll() }
+        verify(exactly = 1) { mockRepository.findWithFilters(any(), any()) }
     }
 
-    test("Should return an empty list when entities absent") {
+    test("Should return an empty list when entities absent and no parameters passed") {
         //  ARRANGE
-        every { mockRepository.findAll() } returns emptyList()
+        every {
+            mockRepository.findWithFilters(
+                completed = null,
+                subtitle = null,
+            )
+        } returns emptyList()
 
         //  ACT
-        val result = service.getTodos()
+        val result =
+            service.getTodos(
+                completed = null,
+                subtitle = null,
+            )
 
         //  ASSERT
         result shouldBe emptyList<TodoModel>()
         result.size shouldBe 0
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findAll() }
+        verify(exactly = 1) { mockRepository.findWithFilters(any(), any()) }
     }
 
-    test("Should return a list of completed models when such exist") {
+    test("Should return a list of completed models when such exist and completed parameter passed") {
         //  ARRANGE
         val entities =
             listOf(
                 TestDataBuilder.entitySavedFilled(),
                 TestDataBuilder.entitySavedFilled(id = 2L),
             )
-        every { mockRepository.findByCompleted(true) } returns entities
+        every {
+            mockRepository.findWithFilters(
+                completed = true,
+                subtitle = null,
+            )
+        } returns entities
 
         //  ACT
-        val result = service.getAllTodosByCompleted(true)
+        val result =
+            service.getTodos(
+                completed = true,
+                subtitle = null,
+            )
 
         //  ASSERT
         result.size shouldBe entities.size
         result.onEach { model -> model.completed shouldBe true }
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findByCompleted(true) }
+        verify(exactly = 1) { mockRepository.findWithFilters(true, null) }
     }
 
     test("Should return an empty list when completed entities absent") {
         //  ARRANGE
-        every { mockRepository.findByCompleted(true) } returns emptyList()
+        every {
+            mockRepository.findWithFilters(
+                completed = true,
+                subtitle = null,
+            )
+        } returns emptyList()
 
         //  ACT
-        val result = service.getAllTodosByCompleted(true)
+        val result =
+            service.getTodos(
+                completed = true,
+                subtitle = null,
+            )
 
         //  ASSERT
         result shouldBe emptyList<TodoModel>()
         result.size shouldBe 0
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findByCompleted(true) }
+        verify(exactly = 1) { mockRepository.findWithFilters(true, null) }
+    }
+
+    test("Should return a list of models which titles contain subtitle with 1 parameter passed") {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entitySavedFilled(),
+                TestDataBuilder.entitySavedFilled(id = 2L),
+            )
+        every {
+            mockRepository.findWithFilters(
+                completed = null,
+                subtitle = "tEsT",
+            )
+        } returns entities
+
+        //  ACT
+        val result =
+            service.getTodos(
+                completed = null,
+                subtitle = "tEsT",
+            )
+
+        //  ASSERT
+        result.size shouldBe entities.size
+        result.onEach { model -> model.title shouldContain "tEsT".lowercase() }
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(null, "tEsT") }
+    }
+
+    test("Should return an empty list when no entities contain subtitle in titles") {
+        //  ARRANGE
+        every {
+            mockRepository.findWithFilters(
+                completed = null,
+                subtitle = "tEsT",
+            )
+        } returns emptyList()
+
+        //  ACT
+        val result =
+            service.getTodos(
+                completed = null,
+                subtitle = "tEsT",
+            )
+
+        //  ASSERT
+        result shouldBe emptyList<TodoModel>()
+        result.size shouldBe 0
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(null, "tEsT") }
+    }
+
+    test("Should return a list of completed models containing subtitle when 2 parameters passed") {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entitySavedFilled(),
+                TestDataBuilder.entitySavedFilled(id = 2L),
+            )
+        every {
+            mockRepository.findWithFilters(
+                completed = true,
+                subtitle = "tESt",
+            )
+        } returns entities
+
+        //  ACT
+        val result =
+            service.getTodos(
+                completed = true,
+                subtitle = "tESt",
+            )
+
+        //  ASSERT
+        result.size shouldBe entities.size
+        result.onEach { model -> model.completed shouldBe true }
+        result.onEach { model -> model.title shouldContain "tESt".lowercase() }
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(true, "tESt") }
+    }
+
+    test("Should return an empty list when no completed entities contain subtitle in titles with 2 parameters") {
+        //  ARRANGE
+        every {
+            mockRepository.findWithFilters(
+                completed = true,
+                subtitle = "tEsT",
+            )
+        } returns emptyList()
+
+        //  ACT
+        val result =
+            service.getTodos(
+                completed = true,
+                subtitle = "tEsT",
+            )
+
+        //  ASSERT
+        result shouldBe emptyList<TodoModel>()
+        result.size shouldBe 0
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(true, "tEsT") }
     }
 
     test("Should throw exception when update by existing ID and blank title in request") {

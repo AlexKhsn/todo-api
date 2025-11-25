@@ -30,9 +30,9 @@ class TodoControllerTest : FunSpec() {
     lateinit var todoService: TodoService
 
     init {
-        test("GET /api/todos should route to getAllTodos method") {
+        test("GET /api/todos should route to getTodos method") {
             //  ARRANGE
-            whenever(todoService.getTodos()).thenReturn(emptyList())
+            whenever(todoService.getTodos(null, null)).thenReturn(emptyList())
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos"))
@@ -79,14 +79,14 @@ class TodoControllerTest : FunSpec() {
 
         test("GET /api/todos?completed=true should call correct service method") {
             //  ARRANGE
-            whenever(todoService.getAllTodosByCompleted(any())).thenReturn(emptyList())
+            whenever(todoService.getTodos(true, null)).thenReturn(emptyList())
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos?completed=true"))
                 .andExpect(status().isOk)
 
             //  VERIFY
-            verify(todoService).getAllTodosByCompleted(any())
+            verify(todoService).getTodos(true, null)
         }
     }
 }

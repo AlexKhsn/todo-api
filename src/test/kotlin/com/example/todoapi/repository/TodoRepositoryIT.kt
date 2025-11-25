@@ -28,7 +28,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findByCompleted(true)
+        val result = repository.findWithFilters(true, null)
 
         //  ASSERT
         result.size shouldBe 2
@@ -48,7 +48,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findByCompleted(false)
+        val result = repository.findWithFilters(false, null)
 
         //  ASSERT
         result.size shouldBe 1
@@ -66,7 +66,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findByCompleted(true)
+        val result = repository.findWithFilters(true, null)
 
         //  ASSERT
         result.isEmpty() shouldBe true
@@ -83,7 +83,82 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findByCompleted(false)
+        val result = repository.findWithFilters(false, null)
+
+        //  ASSERT
+        result.isEmpty() shouldBe true
+    }
+
+    @Test
+    fun `Should return a list of entities contain subtitle in titles`() {
+        //  ARRANGE
+        val firstEntity = TestDataBuilder.entityToSaveFilled()
+        val secondEntity = TestDataBuilder.entityToSaveFilled()
+        val thirdEntity = TestDataBuilder.entityToSaveDefault(title = "default")
+
+        entityManager.persist(firstEntity)
+        entityManager.persist(secondEntity)
+        entityManager.persist(thirdEntity)
+        entityManager.flush()
+
+        //  ACT
+        val result = repository.findWithFilters(null, "tESt")
+
+        //  ASSERT
+        result.size shouldBe 2
+        result.all { it.title.contains("tESt".lowercase()) } shouldBe true
+    }
+
+    @Test
+    fun `Should return an empty list when no entities contain subtitle in titles`() {
+        //  ARRANGE
+        val firstEntity = TestDataBuilder.entityToSaveDefault()
+        val secondEntity = TestDataBuilder.entityToSaveDefault()
+
+        entityManager.persist(firstEntity)
+        entityManager.persist(secondEntity)
+        entityManager.flush()
+
+        //  ACT
+        val result = repository.findWithFilters(null, "default")
+
+        //  ASSERT
+        result.isEmpty() shouldBe true
+    }
+
+    @Test
+    fun `Should return a list of completed entities contain subtitle in titles`() {
+        //  ARRANGE
+        val firstEntity = TestDataBuilder.entityToSaveFilled()
+        val secondEntity = TestDataBuilder.entityToSaveFilled()
+        val thirdEntity = TestDataBuilder.entityToSaveFilled(title = "default")
+
+        entityManager.persist(firstEntity)
+        entityManager.persist(secondEntity)
+        entityManager.persist(thirdEntity)
+        entityManager.flush()
+
+        //  ACT
+        val result = repository.findWithFilters(true, "tESt")
+
+        //  ASSERT
+        result.size shouldBe 2
+        result.all { it.completed } shouldBe true
+        result.all { it.title.contains("tESt".lowercase()) } shouldBe true
+    }
+
+    @Test
+    fun `Should return an empty list when no completed entities contain subtitle in titles`() {
+        //  ARRANGE
+        val firstEntity = TestDataBuilder.entityToSaveDefault()
+        val secondEntity = TestDataBuilder.entityToSaveDefault()
+
+        entityManager.persist(firstEntity)
+        entityManager.persist(secondEntity)
+        entityManager.flush()
+
+        //  ACT
+        val result = repository.findWithFilters(true, "default")
 
         //  ASSERT
         result.isEmpty() shouldBe true

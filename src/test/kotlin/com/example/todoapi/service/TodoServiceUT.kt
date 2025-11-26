@@ -708,7 +708,7 @@ class TodoServiceUT : FunSpec({
         //  ACT
         service.getTodos(true, "test", null, pageable)
 
-        //  VERIFY
+        //  ASSERT & VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(true, "test", null, pageable) }
     }
 
@@ -722,7 +722,49 @@ class TodoServiceUT : FunSpec({
         //  ACT
         service.getTodos(null, null, null, pageable)
 
-        //  VERIFY
+        //  ASSERT & VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(null, null, null, pageable) }
+    }
+
+    test("Should pass priority parameter to repository without modification") {
+        //  ARRANGE
+        val pageable = PageRequest.of(0, 10)
+        val page = PageImpl(emptyList<Todo>(), pageable, 0)
+
+        every { mockRepository.findWithFilters(null, null, Priority.HIGH, pageable) } returns page
+
+        //  ACT
+        service.getTodos(null, null, Priority.HIGH, pageable)
+
+        //  ASSERT & VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, Priority.HIGH, pageable) }
+    }
+
+    test("Should handle null priority parameter") {
+        //  ARRANGE
+        val pageable = PageRequest.of(0, 10)
+        val page = PageImpl(emptyList<Todo>(), pageable, 0)
+
+        every { mockRepository.findWithFilters(null, null, null, pageable) } returns page
+
+        //  ACT
+        service.getTodos(null, null, null, pageable)
+
+        //  ASSERT & VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, null, pageable) }
+    }
+
+    test("Should pass priority with other filters") {
+        //  ARRANGE
+        val pageable = PageRequest.of(0, 10)
+        val page = PageImpl(emptyList<Todo>(), pageable, 0)
+
+        every { mockRepository.findWithFilters(true, "test", Priority.HIGH, pageable) } returns page
+
+        //  ACT
+        service.getTodos(true, "test", Priority.HIGH, pageable)
+
+        //  ASSERT & VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(true, "test", Priority.HIGH, pageable) }
     }
 })

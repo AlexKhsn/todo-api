@@ -284,4 +284,91 @@ class TodoRepositoryIT {
         result.content[1].title shouldBe "Banana task"
         result.content[1].completed shouldBe true
     }
+
+    @Test
+    fun `Should return only HIGH priority todos when filtering by HIGH`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(title = "Zebra task", priority = Priority.HIGH),
+                TestDataBuilder.entityToSaveDefault(title = "Apple task", completed = true),
+                TestDataBuilder.entityToSaveDefault(title = "Banana task", completed = true, priority = Priority.HIGH),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val pageable = PageRequest.of(0, 10)
+
+        //  ACT
+        val result = repository.findWithFilters(null, null, Priority.HIGH, pageable)
+
+        //  ASSERT
+        result.content.size shouldBe 2
+        result.totalElements shouldBe 2
+        result.content.all { it.priority == Priority.HIGH } shouldBe true
+    }
+
+    @Test
+    fun `Should return empty list when no todos match priority filter`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(title = "Zebra task", priority = Priority.LOW),
+                TestDataBuilder.entityToSaveDefault(title = "Apple task", completed = true),
+                TestDataBuilder.entityToSaveDefault(title = "Banana task", completed = true, priority = Priority.LOW),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val pageable = PageRequest.of(0, 10)
+
+        //  ACT
+        val result = repository.findWithFilters(null, null, Priority.HIGH, pageable)
+
+        //  ASSERT
+        result.content.size shouldBe 0
+        result.totalElements shouldBe 0
+    }
+
+    @Test
+    fun `Should combine priority filter with completed filter`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(title = "Zebra task", priority = Priority.HIGH),
+                TestDataBuilder.entityToSaveDefault(title = "Apple task", completed = true, priority = Priority.HIGH),
+                TestDataBuilder.entityToSaveDefault(title = "Banana task", completed = true, priority = Priority.HIGH),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val pageable = PageRequest.of(0, 10)
+
+        //  ACT
+        val result = repository.findWithFilters(true, null, Priority.HIGH, pageable)
+
+        //  ASSERT
+        result.content.size shouldBe 2
+        result.totalElements shouldBe 2
+        result.content.any { it -> it.title == "Zebra task" } shouldBe false
+    }
+
+    @Test
+    fun `Should combine priority filter with subtitle search`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(title = "Zebra", priority = Priority.HIGH),
+                TestDataBuilder.entityToSaveDefault(title = "Apple task", priority = Priority.HIGH),
+                TestDataBuilder.entityToSaveDefault(title = "Banana task", priority = Priority.HIGH),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val pageable = PageRequest.of(0, 10)
+
+        //  ACT
+        val result = repository.findWithFilters(null, "task", Priority.HIGH, pageable)
+
+        //  ASSERT
+        result.content.size shouldBe 2
+        result.totalElements shouldBe 2
+        result.content.any { it.title == "Zebra task" } shouldBe false
+    }
 }

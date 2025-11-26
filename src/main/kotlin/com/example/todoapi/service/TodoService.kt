@@ -13,6 +13,7 @@ import java.time.LocalDateTime
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class TodoService(
@@ -78,6 +79,13 @@ class TodoService(
         val foundModel = getTodoById(id)
         todoRepository.deleteById(id)
         return foundModel
+    }
+
+    @Transactional
+    fun bulkDeleteTodos(ids: List<Long>): Int {
+        if (ids.isEmpty()) throw IllegalArgumentException("Ids must not be empty!")
+        ids.forEach { getTodoById(it) }
+        return todoRepository.deleteByIdIn(ids)
     }
 
     fun toggleComplete(id: Long): TodoModel {

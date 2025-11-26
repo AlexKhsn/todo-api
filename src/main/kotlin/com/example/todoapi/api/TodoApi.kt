@@ -92,4 +92,14 @@ interface TodoApi {
         @PathVariable
         id: Long,
     ): ResponseEntity<TodoResponse>
+
+    @Operation(
+        summary = "Bulk delete tasks",
+        description = "Delete multiple tasks by their IDs",
+    )
+    @DeleteMapping("/bulk")
+    fun bulkDeleteTodos(
+        @RequestParam(required = true)
+        ids: List<Long>,
+    ): ResponseEntity<Map<String, Int>>
 }

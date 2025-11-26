@@ -11,6 +11,7 @@ import com.example.todoapi.repository.TodoRepository
 import com.example.todoapi.testUtil.TestDataBuilder
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.ints.exactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
@@ -766,5 +767,67 @@ class TodoServiceUT : FunSpec({
 
         //  ASSERT & VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(true, "test", Priority.HIGH, pageable) }
+    }
+
+    test("Should throw exception when ids list is empty") {
+        //  ARRANGE
+        val emptyIds = emptyList<Long>()
+
+        //  ACT
+        val exception =
+            shouldThrow<IllegalArgumentException> {
+                service.bulkDeleteTodos(emptyIds)
+            }
+
+        //  ASSERT
+        exception.message shouldBe "Ids must not be empty!"
+
+        //  VERIFY
+        verify(exactly = 0) { mockRepository.deleteByIdIn(emptyIds) }
+    }
+
+    test("Should throw exception when one id not found") {
+        //  ARRANGE
+        val ids = listOf(1L, 2L)
+        val entity1 = TestDataBuilder.entitySavedDefault()
+
+        every { mockRepository.findById(1L) } returns Optional.of(entity1)
+        every { mockRepository.findById(2L) } returns Optional.empty()
+
+        //  ACT
+        val exception =
+            shouldThrow<TodoNotFoundException> {
+                service.bulkDeleteTodos(ids)
+            }
+
+        //  ASSERT
+        exception.message shouldBe "Todo with id: 2 not found"
+
+        //  VERIFY
+        verify(exactly = 2) { mockRepository.findById(any()) }
+        verify(exactly = 0) { mockRepository.deleteByIdIn(ids) }
+    }
+
+    test("Should call deleteByIdIn when all ids exist") {
+        //  ARRANGE
+        val ids = listOf(1L, 2L, 3L)
+        val entity1 = TestDataBuilder.entitySavedDefault()
+        val entity2 = TestDataBuilder.entitySavedDefault(id = 2L)
+        val entity3 = TestDataBuilder.entitySavedDefault(id = 3L)
+
+        every { mockRepository.findById(1L) } returns Optional.of(entity1)
+        every { mockRepository.findById(2L) } returns Optional.of(entity2)
+        every { mockRepository.findById(3L) } returns Optional.of(entity3)
+        every { mockRepository.deleteByIdIn(any()) } returns 3
+
+        //  ACT
+        val result = service.bulkDeleteTodos(ids)
+
+        //  ASSERT
+        result shouldBe 3
+
+        //  VERIFY
+        verify(exactly = 3) { mockRepository.findById(any()) }
+        verify(exactly = 1) { mockRepository.deleteByIdIn(ids) }
     }
 })

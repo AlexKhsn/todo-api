@@ -3,6 +3,7 @@ package com.example.todoapi.service
 import com.example.todoapi.dto.CreateTodoRequest
 import com.example.todoapi.dto.UpdateTodoRequest
 import com.example.todoapi.dto.toModel
+import com.example.todoapi.entity.Priority
 import com.example.todoapi.exception.CustomExceptions.TodoNotFoundException
 import com.example.todoapi.models.TodoModel
 import com.example.todoapi.models.toEntity
@@ -36,9 +37,10 @@ class TodoService(
     fun getTodos(
         completed: Boolean?,
         subtitle: String?,
+        priority: Priority?,
         pageable: Pageable = Pageable.unpaged(),
     ): Page<TodoModel> {
-        val foundEntities = todoRepository.findWithFilters(completed, subtitle, pageable)
+        val foundEntities = todoRepository.findWithFilters(completed, subtitle, priority, pageable)
         return foundEntities.map { it.toModel() }
     }
 

@@ -5,6 +5,7 @@ import com.example.todoapi.dto.CreateTodoRequest
 import com.example.todoapi.dto.TodoResponse
 import com.example.todoapi.dto.UpdateTodoRequest
 import com.example.todoapi.dto.toResponse
+import com.example.todoapi.entity.Priority
 import com.example.todoapi.service.TodoService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -24,9 +25,10 @@ class TodoController(
     override fun getAllTodos(
         completed: Boolean?,
         subtitle: String?,
+        priority: Priority?,
         pageable: Pageable,
     ): ResponseEntity<Page<TodoResponse>> {
-        val foundModels = todoService.getTodos(completed, subtitle, pageable)
+        val foundModels = todoService.getTodos(completed, subtitle, priority, pageable)
         return ResponseEntity.status(HttpStatus.OK).body(foundModels.map { it.toResponse() })
     }
 

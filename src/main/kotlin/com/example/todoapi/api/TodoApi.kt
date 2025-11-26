@@ -3,6 +3,7 @@ package com.example.todoapi.api
 import com.example.todoapi.dto.CreateTodoRequest
 import com.example.todoapi.dto.TodoResponse
 import com.example.todoapi.dto.UpdateTodoRequest
+import com.example.todoapi.entity.Priority
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -44,6 +45,8 @@ interface TodoApi {
         completed: Boolean? = null,
         @RequestParam(required = false)
         subtitle: String? = null,
+        @RequestParam(required = false)
+        priority: Priority? = null,
         @ParameterObject pageable: Pageable = Pageable.unpaged(),
     ): ResponseEntity<Page<TodoResponse>>
 

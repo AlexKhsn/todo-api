@@ -42,7 +42,7 @@ class TodoControllerTest : FunSpec() {
         test("GET /api/todos should route to getTodos method") {
             //  ARRANGE
             val page = PageImpl(emptyList<TodoModel>(), Pageable.unpaged(), 0)
-            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+            whenever(todoService.getTodos(eq(null), eq(null), eq(null), any())).thenReturn(page)
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos"))
@@ -90,20 +90,20 @@ class TodoControllerTest : FunSpec() {
         test("GET /api/todos?completed=true should call correct service method") {
             //  ARRANGE
             val page = PageImpl(emptyList<TodoModel>(), Pageable.unpaged(), 0)
-            whenever(todoService.getTodos(eq(true), eq(null), any())).thenReturn(page)
+            whenever(todoService.getTodos(eq(true), eq(null), eq(null), any())).thenReturn(page)
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos?completed=true"))
                 .andExpect(status().isOk)
 
             //  VERIFY
-            verify(todoService).getTodos(eq(true), eq(null), any())
+            verify(todoService).getTodos(eq(true), eq(null), eq(null), any())
         }
 
         test("GET /api/todos?page=1&size=5 should pass pagination parameters to service") {
             //  ARRANGE
             val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(1, 5), 0)
-            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+            whenever(todoService.getTodos(eq(null), eq(null), eq(null), any())).thenReturn(page)
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos?page=1&size=5"))
@@ -113,7 +113,7 @@ class TodoControllerTest : FunSpec() {
 
             //  VERIFY
             val captor = argumentCaptor<Pageable>()
-            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+            verify(todoService).getTodos(eq(null), eq(null), eq(null), captor.capture())
 
             val capturedPageable = captor.firstValue
             capturedPageable.pageNumber shouldBe 1
@@ -123,7 +123,7 @@ class TodoControllerTest : FunSpec() {
         test("GET /api/todos without pagination params should use defaults") {
             // ARRANGE
             val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
-            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+            whenever(todoService.getTodos(eq(null), eq(null), eq(null), any())).thenReturn(page)
 
             // ACT & ASSERT
             mvc.perform(get("/api/todos"))
@@ -131,7 +131,7 @@ class TodoControllerTest : FunSpec() {
 
             // VERIFY - проверяем дефолтные значения Spring
             val captor = argumentCaptor<Pageable>()
-            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+            verify(todoService).getTodos(eq(null), eq(null), eq(null), captor.capture())
 
             val capturedPageable = captor.firstValue
             capturedPageable.pageNumber shouldBe 0 // Дефолтная страница 0
@@ -143,14 +143,14 @@ class TodoControllerTest : FunSpec() {
             val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
             val captor = argumentCaptor<Pageable>()
 
-            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+            whenever(todoService.getTodos(eq(null), eq(null), eq(null), any())).thenReturn(page)
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos?sort=title,asc"))
                 .andExpect(status().isOk)
 
             //  VERIFY
-            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+            verify(todoService).getTodos(eq(null), eq(null), eq(null), captor.capture())
             val capturedPageable = captor.firstValue
             val sort = capturedPageable.sort
             sort.isSorted shouldBe true
@@ -162,14 +162,14 @@ class TodoControllerTest : FunSpec() {
             val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
             val captor = argumentCaptor<Pageable>()
 
-            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+            whenever(todoService.getTodos(eq(null), eq(null), eq(null), any())).thenReturn(page)
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos?sort=priority,desc&sort=title,asc"))
                 .andExpect(status().isOk)
 
             //  VERIFY
-            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+            verify(todoService).getTodos(eq(null), eq(null), eq(null), captor.capture())
             val capturedPageable = captor.firstValue
             val sort = capturedPageable.sort
             sort.getOrderFor("priority")?.direction shouldBe Sort.Direction.DESC
@@ -181,14 +181,14 @@ class TodoControllerTest : FunSpec() {
             val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
             val captor = argumentCaptor<Pageable>()
 
-            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+            whenever(todoService.getTodos(eq(null), eq(null), eq(null), any())).thenReturn(page)
 
             //  ACT & ASSERT
             mvc.perform(get("/api/todos?page=2&size=5&sort=createdAt,desc"))
                 .andExpect(status().isOk)
 
             //  VERIFY
-            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+            verify(todoService).getTodos(eq(null), eq(null), eq(null), captor.capture())
             val capturedPageable = captor.firstValue
             capturedPageable.pageNumber shouldBe 2
             capturedPageable.pageSize shouldBe 5

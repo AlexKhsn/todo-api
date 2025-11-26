@@ -130,6 +130,7 @@ class TodoServiceUT : FunSpec({
             mockRepository.findWithFilters(
                 completed = null,
                 subtitle = null,
+                priority = null,
             )
         } returns page
 
@@ -138,6 +139,7 @@ class TodoServiceUT : FunSpec({
             service.getTodos(
                 completed = null,
                 subtitle = null,
+                priority = null,
             )
 
         //  ASSERT
@@ -154,7 +156,7 @@ class TodoServiceUT : FunSpec({
         }
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(any(), any(), any()) }
+        verify(exactly = 1) { mockRepository.findWithFilters(any(), any(), any(), any()) }
     }
 
     test("Should return an empty list when entities absent and no parameters passed") {
@@ -164,6 +166,7 @@ class TodoServiceUT : FunSpec({
             mockRepository.findWithFilters(
                 completed = null,
                 subtitle = null,
+                priority = null,
             )
         } returns page
 
@@ -172,6 +175,7 @@ class TodoServiceUT : FunSpec({
             service.getTodos(
                 completed = null,
                 subtitle = null,
+                priority = null,
             )
 
         //  ASSERT
@@ -179,7 +183,7 @@ class TodoServiceUT : FunSpec({
         result.content.size shouldBe 0
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(any(), any()) }
+        verify(exactly = 1) { mockRepository.findWithFilters(any(), any(), any()) }
     }
 
     test("Should return a list of completed models when such exist and completed parameter passed") {
@@ -194,6 +198,7 @@ class TodoServiceUT : FunSpec({
             mockRepository.findWithFilters(
                 completed = true,
                 subtitle = null,
+                priority = null,
             )
         } returns page
 
@@ -202,6 +207,7 @@ class TodoServiceUT : FunSpec({
             service.getTodos(
                 completed = true,
                 subtitle = null,
+                priority = null,
             )
 
         //  ASSERT
@@ -209,7 +215,7 @@ class TodoServiceUT : FunSpec({
         result.content.onEach { model -> model.completed shouldBe true }
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(true, null) }
+        verify(exactly = 1) { mockRepository.findWithFilters(true, null, null) }
     }
 
     test("Should return an empty list when completed entities absent") {
@@ -219,6 +225,7 @@ class TodoServiceUT : FunSpec({
             mockRepository.findWithFilters(
                 completed = true,
                 subtitle = null,
+                priority = null,
             )
         } returns page
 
@@ -227,6 +234,7 @@ class TodoServiceUT : FunSpec({
             service.getTodos(
                 completed = true,
                 subtitle = null,
+                priority = null,
             )
 
         //  ASSERT
@@ -234,7 +242,7 @@ class TodoServiceUT : FunSpec({
         result.content.size shouldBe 0
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(true, null) }
+        verify(exactly = 1) { mockRepository.findWithFilters(true, null, null) }
     }
 
     test("Should return a list of models which titles contain subtitle with 1 parameter passed") {
@@ -249,6 +257,7 @@ class TodoServiceUT : FunSpec({
             mockRepository.findWithFilters(
                 completed = null,
                 subtitle = "tEsT",
+                priority = null,
             )
         } returns page
 
@@ -257,6 +266,7 @@ class TodoServiceUT : FunSpec({
             service.getTodos(
                 completed = null,
                 subtitle = "tEsT",
+                priority = null,
             )
 
         //  ASSERT
@@ -264,7 +274,7 @@ class TodoServiceUT : FunSpec({
         result.content.onEach { model -> model.title shouldContain "tEsT".lowercase() }
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(null, "tEsT") }
+        verify(exactly = 1) { mockRepository.findWithFilters(null, "tEsT", null) }
     }
 
     test("Should return an empty list when no entities contain subtitle in titles") {
@@ -274,6 +284,7 @@ class TodoServiceUT : FunSpec({
             mockRepository.findWithFilters(
                 completed = null,
                 subtitle = "tEsT",
+                priority = null,
             )
         } returns page
 
@@ -282,6 +293,7 @@ class TodoServiceUT : FunSpec({
             service.getTodos(
                 completed = null,
                 subtitle = "tEsT",
+                priority = null,
             )
 
         //  ASSERT
@@ -289,7 +301,7 @@ class TodoServiceUT : FunSpec({
         result.content.size shouldBe 0
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(null, "tEsT") }
+        verify(exactly = 1) { mockRepository.findWithFilters(null, "tEsT", null) }
     }
 
     test("Should return a list of completed models containing subtitle when 2 parameters passed") {
@@ -304,6 +316,7 @@ class TodoServiceUT : FunSpec({
             mockRepository.findWithFilters(
                 completed = true,
                 subtitle = "tESt",
+                priority = null,
             )
         } returns page
 
@@ -312,6 +325,7 @@ class TodoServiceUT : FunSpec({
             service.getTodos(
                 completed = true,
                 subtitle = "tESt",
+                priority = null,
             )
 
         //  ASSERT
@@ -320,7 +334,7 @@ class TodoServiceUT : FunSpec({
         result.content.onEach { model -> model.title shouldContain "tESt".lowercase() }
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(true, "tESt") }
+        verify(exactly = 1) { mockRepository.findWithFilters(true, "tESt", null) }
     }
 
     test("Should return an empty list when no completed entities contain subtitle in titles with 2 parameters") {
@@ -330,6 +344,7 @@ class TodoServiceUT : FunSpec({
             mockRepository.findWithFilters(
                 completed = true,
                 subtitle = "tEsT",
+                priority = null,
             )
         } returns page
 
@@ -338,6 +353,7 @@ class TodoServiceUT : FunSpec({
             service.getTodos(
                 completed = true,
                 subtitle = "tEsT",
+                priority = null,
             )
 
         //  ASSERT
@@ -345,7 +361,7 @@ class TodoServiceUT : FunSpec({
         result.content.size shouldBe 0
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(true, "tEsT") }
+        verify(exactly = 1) { mockRepository.findWithFilters(true, "tEsT", null) }
     }
 
     test("Should throw exception when update by existing ID and blank title in request") {
@@ -635,10 +651,10 @@ class TodoServiceUT : FunSpec({
         val pageable = PageRequest.of(0, 2)
         val page = PageImpl(entities.take(2), pageable, 4)
 
-        every { mockRepository.findWithFilters(null, null, pageable) } returns page
+        every { mockRepository.findWithFilters(null, null, null, pageable) } returns page
 
         //  ACT
-        val result = service.getTodos(null, null, pageable)
+        val result = service.getTodos(null, null, null, pageable)
 
         //  ASSERT
         result.content.size shouldBe 2
@@ -649,7 +665,7 @@ class TodoServiceUT : FunSpec({
         result.isLast shouldBe false
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(null, null, pageable) }
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, null, pageable) }
     }
 
     test("Should pass sorting parameters to repository") {
@@ -657,13 +673,13 @@ class TodoServiceUT : FunSpec({
         val pageable = PageRequest.of(0, 10, Sort.by("title").ascending())
         val page = PageImpl(emptyList<Todo>(), pageable, 0)
 
-        every { mockRepository.findWithFilters(null, null, pageable) } returns page
+        every { mockRepository.findWithFilters(null, null, null, pageable) } returns page
 
         //  ACT
-        service.getTodos(null, null, pageable)
+        service.getTodos(null, null, null, pageable)
 
         //  ASSERT & VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(null, null, pageable) }
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, null, pageable) }
     }
 
     test("Should handle multiple sort criteria") {
@@ -672,13 +688,13 @@ class TodoServiceUT : FunSpec({
         val pageable = PageRequest.of(0, 10, sort)
         val page = PageImpl(emptyList<Todo>(), pageable, 0)
 
-        every { mockRepository.findWithFilters(null, null, pageable) } returns page
+        every { mockRepository.findWithFilters(null, null, null, pageable) } returns page
 
         //  ACT
-        service.getTodos(null, null, pageable)
+        service.getTodos(null, null, null, pageable)
 
         //  ASSERT & VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(null, null, pageable) }
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, null, pageable) }
     }
 
     test("Should apply sorting together with filters") {
@@ -687,13 +703,13 @@ class TodoServiceUT : FunSpec({
         val pageable = PageRequest.of(0, 10, sort)
         val page = PageImpl(emptyList<Todo>(), pageable, 0)
 
-        every { mockRepository.findWithFilters(true, "test", pageable) } returns page
+        every { mockRepository.findWithFilters(true, "test", null, pageable) } returns page
 
         //  ACT
-        service.getTodos(true, "test", pageable)
+        service.getTodos(true, "test", null, pageable)
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(true, "test", pageable) }
+        verify(exactly = 1) { mockRepository.findWithFilters(true, "test", null, pageable) }
     }
 
     test("Should handle unsorted pageable") {
@@ -701,12 +717,12 @@ class TodoServiceUT : FunSpec({
         val pageable = PageRequest.of(0, 10)
         val page = PageImpl(emptyList<Todo>(), pageable, 0)
 
-        every { mockRepository.findWithFilters(null, null, pageable) } returns page
+        every { mockRepository.findWithFilters(null, null, null, pageable) } returns page
 
         //  ACT
-        service.getTodos(null, null, pageable)
+        service.getTodos(null, null, null, pageable)
 
         //  VERIFY
-        verify(exactly = 1) { mockRepository.findWithFilters(null, null, pageable) }
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, null, pageable) }
     }
 })

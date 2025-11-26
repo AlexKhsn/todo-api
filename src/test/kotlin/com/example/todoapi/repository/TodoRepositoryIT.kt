@@ -31,7 +31,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findWithFilters(true, null)
+        val result = repository.findWithFilters(true, null, null)
 
         //  ASSERT
         result.content.size shouldBe 2
@@ -51,7 +51,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findWithFilters(false, null)
+        val result = repository.findWithFilters(false, null, null)
 
         //  ASSERT
         result.content.size shouldBe 1
@@ -69,7 +69,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findWithFilters(true, null)
+        val result = repository.findWithFilters(true, null, null)
 
         //  ASSERT
         result.content.isEmpty() shouldBe true
@@ -86,7 +86,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findWithFilters(false, null)
+        val result = repository.findWithFilters(false, null, null)
 
         //  ASSERT
         result.content.isEmpty() shouldBe true
@@ -105,7 +105,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findWithFilters(null, "tESt")
+        val result = repository.findWithFilters(null, "tESt", null)
 
         //  ASSERT
         result.content.size shouldBe 2
@@ -123,7 +123,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findWithFilters(null, "default")
+        val result = repository.findWithFilters(null, "default", null)
 
         //  ASSERT
         result.content.isEmpty() shouldBe true
@@ -142,7 +142,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findWithFilters(true, "tESt")
+        val result = repository.findWithFilters(true, "tESt", null)
 
         //  ASSERT
         result.content.size shouldBe 2
@@ -161,7 +161,7 @@ class TodoRepositoryIT {
         entityManager.flush()
 
         //  ACT
-        val result = repository.findWithFilters(true, "default")
+        val result = repository.findWithFilters(true, "default", null)
 
         //  ASSERT
         result.content.isEmpty() shouldBe true
@@ -179,7 +179,7 @@ class TodoRepositoryIT {
         val pageable = PageRequest.of(1, 2)
 
         //  ACT
-        val result = repository.findWithFilters(null, null, pageable)
+        val result = repository.findWithFilters(null, null, null, pageable)
 
         //  ASSERT
         result.content.size shouldBe 2
@@ -204,7 +204,7 @@ class TodoRepositoryIT {
         val pageable = PageRequest.of(2, 2)
 
         //  ACT
-        val result = repository.findWithFilters(null, null, pageable)
+        val result = repository.findWithFilters(null, null, null, pageable)
 
         //  ASSERT
         result.content.size shouldBe 1
@@ -227,7 +227,7 @@ class TodoRepositoryIT {
         val pageable = PageRequest.of(0, 10, Sort.by("title").ascending())
 
         //  ACT
-        val result = repository.findWithFilters(null, null, pageable)
+        val result = repository.findWithFilters(null, null, null, pageable)
 
         //  ASSERT
         result.content[0].title shouldBe "Apple task"
@@ -249,7 +249,7 @@ class TodoRepositoryIT {
         val pageable = PageRequest.of(0, 10, Sort.by("priority").ascending().and(Sort.by("title").ascending()))
 
         //  ACT
-        val result = repository.findWithFilters(null, null, pageable)
+        val result = repository.findWithFilters(null, null, null, pageable)
 
         //  ASSERT
         result.content[0].title shouldBe "Apple task"
@@ -274,7 +274,7 @@ class TodoRepositoryIT {
         val pageable = PageRequest.of(0, 10, Sort.by("title").ascending())
 
         //  ACT
-        val result = repository.findWithFilters(true, null, pageable)
+        val result = repository.findWithFilters(true, null, null, pageable)
 
         //  ASSERT
         result.content.size shouldBe 2

@@ -1,5 +1,6 @@
 package com.example.todoapi.repository
 
+import com.example.todoapi.entity.Priority
 import com.example.todoapi.testUtil.TestDataBuilder
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 
 @DataJpaTest
 class TodoRepositoryIT {
@@ -209,5 +211,77 @@ class TodoRepositoryIT {
         result.number shouldBe 2
         result.isLast shouldBe true
         result.content[0].title shouldBe entities[4].title
+    }
+
+    @Test
+    fun `Should return todos sorted by title ascending`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(title = "Zebra task"),
+                TestDataBuilder.entityToSaveDefault(title = "Apple task"),
+                TestDataBuilder.entityToSaveDefault(title = "Banana task"),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val pageable = PageRequest.of(0, 10, Sort.by("title").ascending())
+
+        //  ACT
+        val result = repository.findWithFilters(null, null, pageable)
+
+        //  ASSERT
+        result.content[0].title shouldBe "Apple task"
+        result.content[1].title shouldBe "Banana task"
+        result.content[2].title shouldBe "Zebra task"
+    }
+
+    @Test
+    fun `Should handle multiple sort criteria`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(title = "Zebra task", priority = Priority.LOW),
+                TestDataBuilder.entityToSaveDefault(title = "Apple task", priority = Priority.HIGH),
+                TestDataBuilder.entityToSaveDefault(title = "Banana task", priority = Priority.HIGH),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val pageable = PageRequest.of(0, 10, Sort.by("priority").ascending().and(Sort.by("title").ascending()))
+
+        //  ACT
+        val result = repository.findWithFilters(null, null, pageable)
+
+        //  ASSERT
+        result.content[0].title shouldBe "Apple task"
+        result.content[0].priority shouldBe Priority.HIGH
+        result.content[1].title shouldBe "Banana task"
+        result.content[1].priority shouldBe Priority.HIGH
+        result.content[2].title shouldBe "Zebra task"
+        result.content[2].priority shouldBe Priority.LOW
+    }
+
+    @Test
+    fun `Should apply sorting with filtering`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(title = "Zebra task"),
+                TestDataBuilder.entityToSaveDefault(title = "Apple task", completed = true),
+                TestDataBuilder.entityToSaveDefault(title = "Banana task", completed = true),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val pageable = PageRequest.of(0, 10, Sort.by("title").ascending())
+
+        //  ACT
+        val result = repository.findWithFilters(true, null, pageable)
+
+        //  ASSERT
+        result.content.size shouldBe 2
+        result.totalElements shouldBe 2
+        result.content[0].title shouldBe "Apple task"
+        result.content[0].completed shouldBe true
+        result.content[1].title shouldBe "Banana task"
+        result.content[1].completed shouldBe true
     }
 }

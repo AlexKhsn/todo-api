@@ -23,6 +23,7 @@ import java.util.Optional
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 
 class TodoServiceUT : FunSpec({
     val mockRepository = mockk<TodoRepository>()
@@ -566,6 +567,7 @@ class TodoServiceUT : FunSpec({
     test("Should throw exception when toggle todo completed by non-existing ID") {
         //  ARRANGE
         val nonExistingId = 1L
+
         every { mockRepository.findById(nonExistingId) } returns Optional.empty()
 
         //  ACT
@@ -610,6 +612,7 @@ class TodoServiceUT : FunSpec({
     test("Should throw exception when delete todo by non-existing ID") {
         //  ARRANGE
         val nonExistingId = 1L
+
         every { mockRepository.findById(nonExistingId) } returns Optional.empty()
 
         //  ACT
@@ -644,6 +647,64 @@ class TodoServiceUT : FunSpec({
         result.number shouldBe 0
         result.isFirst shouldBe true
         result.isLast shouldBe false
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, pageable) }
+    }
+
+    test("Should pass sorting parameters to repository") {
+        //  ARRANGE
+        val pageable = PageRequest.of(0, 10, Sort.by("title").ascending())
+        val page = PageImpl(emptyList<Todo>(), pageable, 0)
+
+        every { mockRepository.findWithFilters(null, null, pageable) } returns page
+
+        //  ACT
+        service.getTodos(null, null, pageable)
+
+        //  ASSERT & VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, pageable) }
+    }
+
+    test("Should handle multiple sort criteria") {
+        //  ARRANGE
+        val sort = Sort.by(Sort.Order.desc("priority"), Sort.Order.asc("createdAt"))
+        val pageable = PageRequest.of(0, 10, sort)
+        val page = PageImpl(emptyList<Todo>(), pageable, 0)
+
+        every { mockRepository.findWithFilters(null, null, pageable) } returns page
+
+        //  ACT
+        service.getTodos(null, null, pageable)
+
+        //  ASSERT & VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, pageable) }
+    }
+
+    test("Should apply sorting together with filters") {
+        //  ARRANGE
+        val sort = Sort.by(Sort.Order.asc("createdAt"), Sort.Order.desc("priority"))
+        val pageable = PageRequest.of(0, 10, sort)
+        val page = PageImpl(emptyList<Todo>(), pageable, 0)
+
+        every { mockRepository.findWithFilters(true, "test", pageable) } returns page
+
+        //  ACT
+        service.getTodos(true, "test", pageable)
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(true, "test", pageable) }
+    }
+
+    test("Should handle unsorted pageable") {
+        //  ARRANGE
+        val pageable = PageRequest.of(0, 10)
+        val page = PageImpl(emptyList<Todo>(), pageable, 0)
+
+        every { mockRepository.findWithFilters(null, null, pageable) } returns page
+
+        //  ACT
+        service.getTodos(null, null, pageable)
 
         //  VERIFY
         verify(exactly = 1) { mockRepository.findWithFilters(null, null, pageable) }

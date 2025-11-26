@@ -1,5 +1,6 @@
 package com.example.todoapi.controllers
 
+import com.example.todoapi.entity.Priority
 import com.example.todoapi.exception.CustomExceptions
 import com.example.todoapi.models.TodoModel
 import com.example.todoapi.models.toModel
@@ -8,6 +9,7 @@ import com.example.todoapi.testUtil.TestDataBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import org.hibernate.query.Page.page
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
@@ -193,6 +195,41 @@ class TodoControllerTest : FunSpec() {
             capturedPageable.pageNumber shouldBe 2
             capturedPageable.pageSize shouldBe 5
             capturedPageable.sort.getOrderFor("createdAt")?.direction shouldBe Sort.Direction.DESC
+        }
+
+        test("GET /api/todos?priority=HIGH should call service with HIGH priority") {
+            //  ARRANGE
+            val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
+            val captor = argumentCaptor<Pageable>()
+
+            whenever(todoService.getTodos(eq(null), eq(null), eq(Priority.HIGH), any())).thenReturn(page)
+
+            //  ACT & ASSERT
+            mvc.perform(get("/api/todos?page=0&size=20&priority=HIGH"))
+                .andExpect(status().isOk)
+
+            //  VERIFY
+            verify(todoService).getTodos(eq(null), eq(null), eq(Priority.HIGH), captor.capture())
+        }
+
+        test("GET /api/todos?priority=INVALID should return 400 Bad Request") {
+            //  ACT & ASSERT
+            mvc.perform(get("/api/todos?page=1&size=20&priority=INVALID"))
+                .andExpect(status().isBadRequest)
+        }
+
+        test("GET /api/todos?priority=MEDIUM&completed=false&subtitle=work should pass all three filters") {
+            //  ARRANGE
+            val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
+
+            whenever(todoService.getTodos(eq(false), eq("work"), eq(Priority.MEDIUM), any())).thenReturn(page)
+
+            //  ACT & ASSERT
+            mvc.perform(get("/api/todos?page=0&size=20&priority=MEDIUM&completed=false&subtitle=work"))
+                .andExpect(status().isOk)
+
+            //  VERIFY
+            verify(todoService).getTodos(eq(false), eq("work"), eq(Priority.MEDIUM), any())
         }
     }
 }

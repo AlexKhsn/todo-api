@@ -21,6 +21,7 @@ import io.mockk.verify
 import java.time.LocalDateTime
 import java.util.Optional
 import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 
 class TodoServiceUT : FunSpec({
@@ -623,5 +624,28 @@ class TodoServiceUT : FunSpec({
         //  VERIFY
         verify(exactly = 1) { mockRepository.findById(nonExistingId) }
         verify(exactly = 0) { mockRepository.deleteById(nonExistingId) }
+    }
+
+    test("Should return requested page with correct size and metadata") {
+        //  ARRANGE
+        val entities = TestDataBuilder.listOfEntities()
+        val pageable = PageRequest.of(0, 2)
+        val page = PageImpl(entities.take(2), pageable, 4)
+
+        every { mockRepository.findWithFilters(null, null, pageable) } returns page
+
+        //  ACT
+        val result = service.getTodos(null, null, pageable)
+
+        //  ASSERT
+        result.content.size shouldBe 2
+        result.totalElements shouldBe entities.size
+        result.totalPages shouldBe 2
+        result.number shouldBe 0
+        result.isFirst shouldBe true
+        result.isLast shouldBe false
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findWithFilters(null, null, pageable) }
     }
 })

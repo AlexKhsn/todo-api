@@ -7,7 +7,9 @@ import com.example.todoapi.service.TodoService
 import com.example.todoapi.testUtil.TestDataBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -15,11 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @WebMvcTest(TodoController::class)
@@ -93,6 +97,44 @@ class TodoControllerTest : FunSpec() {
 
             //  VERIFY
             verify(todoService).getTodos(eq(true), eq(null), any())
+        }
+
+        test("GET /api/todos?page=1&size=5 should pass pagination parameters to service") {
+            //  ARRANGE
+            val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(1, 5), 0)
+            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+
+            //  ACT & ASSERT
+            mvc.perform(get("/api/todos?page=1&size=5"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.size").value(5))
+
+            //  VERIFY
+            val captor = argumentCaptor<Pageable>()
+            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+
+            val capturedPageable = captor.firstValue
+            capturedPageable.pageNumber shouldBe 1
+            capturedPageable.pageSize shouldBe 5
+        }
+
+        test("GET /api/todos without pagination params should use defaults") {
+            // ARRANGE
+            val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
+            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+
+            // ACT & ASSERT
+            mvc.perform(get("/api/todos"))
+                .andExpect(status().isOk)
+
+            // VERIFY - проверяем дефолтные значения Spring
+            val captor = argumentCaptor<Pageable>()
+            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+
+            val capturedPageable = captor.firstValue
+            capturedPageable.pageNumber shouldBe 0 // Дефолтная страница 0
+            capturedPageable.pageSize shouldBe 20 // Дефолтный размер 20
         }
     }
 }

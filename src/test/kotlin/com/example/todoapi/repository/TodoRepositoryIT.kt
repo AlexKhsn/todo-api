@@ -6,6 +6,7 @@ import kotlin.test.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
+import org.springframework.data.domain.PageRequest
 
 @DataJpaTest
 class TodoRepositoryIT {
@@ -162,5 +163,51 @@ class TodoRepositoryIT {
 
         //  ASSERT
         result.content.isEmpty() shouldBe true
+    }
+
+    @Test
+    fun `Should return correct page when requesting second page`() {
+        //  ARRANGE
+        val entities =
+            (1..5).map { i ->
+                TestDataBuilder.entityToSaveDefault(title = "Task $i")
+            }
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val pageable = PageRequest.of(1, 2)
+
+        //  ACT
+        val result = repository.findWithFilters(null, null, pageable)
+
+        //  ASSERT
+        result.content.size shouldBe 2
+        result.totalElements shouldBe entities.size
+        result.totalPages shouldBe 3
+        result.number shouldBe 1
+        result.isFirst shouldBe false
+        result.isLast shouldBe false
+        result.content[0].title shouldBe entities[2].title
+        result.content[1].title shouldBe entities[3].title
+    }
+
+    @Test
+    fun `Should return last page with remaining elements`() {
+        //  ARRANGE
+        val entities =
+            (1..5).map { i ->
+                TestDataBuilder.entityToSaveDefault(title = "Task $i")
+            }
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val pageable = PageRequest.of(2, 2)
+
+        //  ACT
+        val result = repository.findWithFilters(null, null, pageable)
+
+        //  ASSERT
+        result.content.size shouldBe 1
+        result.number shouldBe 2
+        result.isLast shouldBe true
+        result.content[0].title shouldBe entities[4].title
     }
 }

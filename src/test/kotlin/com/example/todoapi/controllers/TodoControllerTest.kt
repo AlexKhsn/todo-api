@@ -19,6 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -135,6 +136,63 @@ class TodoControllerTest : FunSpec() {
             val capturedPageable = captor.firstValue
             capturedPageable.pageNumber shouldBe 0 // Дефолтная страница 0
             capturedPageable.pageSize shouldBe 20 // Дефолтный размер 20
+        }
+
+        test("GET /api/todos?sort=title,asc should pass sorting to service") {
+            //  ARRANGE
+            val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
+            val captor = argumentCaptor<Pageable>()
+
+            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+
+            //  ACT & ASSERT
+            mvc.perform(get("/api/todos?sort=title,asc"))
+                .andExpect(status().isOk)
+
+            //  VERIFY
+            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+            val capturedPageable = captor.firstValue
+            val sort = capturedPageable.sort
+            sort.isSorted shouldBe true
+            sort.getOrderFor("title")?.direction shouldBe Sort.Direction.ASC
+        }
+
+        test("GET /api/todos with multiple sort parameters") {
+            //  ARRANGE
+            val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
+            val captor = argumentCaptor<Pageable>()
+
+            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+
+            //  ACT & ASSERT
+            mvc.perform(get("/api/todos?sort=priority,desc&sort=title,asc"))
+                .andExpect(status().isOk)
+
+            //  VERIFY
+            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+            val capturedPageable = captor.firstValue
+            val sort = capturedPageable.sort
+            sort.getOrderFor("priority")?.direction shouldBe Sort.Direction.DESC
+            sort.getOrderFor("title")?.direction shouldBe Sort.Direction.ASC
+        }
+
+        test("GET /api/todos with pagination and sorting combined") {
+            //  ARRANGE
+            val page = PageImpl(emptyList<TodoModel>(), PageRequest.of(0, 20), 0)
+            val captor = argumentCaptor<Pageable>()
+
+            whenever(todoService.getTodos(eq(null), eq(null), any())).thenReturn(page)
+
+            //  ACT & ASSERT
+            mvc.perform(get("/api/todos?page=2&size=5&sort=createdAt,desc"))
+                .andExpect(status().isOk)
+
+            //  VERIFY
+            verify(todoService).getTodos(eq(null), eq(null), captor.capture())
+            val capturedPageable = captor.firstValue
+            capturedPageable.pageNumber shouldBe 2
+            capturedPageable.pageSize shouldBe 5
+            capturedPageable.sort.getOrderFor("createdAt")?.direction shouldBe Sort.Direction.DESC
         }
     }
 }

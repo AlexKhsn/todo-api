@@ -21,6 +21,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import java.time.LocalDateTime
 import java.util.Optional
+import org.mockito.kotlin.any
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -850,5 +851,152 @@ class TodoServiceUT : FunSpec({
         //  VERIFY
         verify(exactly = 2) { mockRepository.findById(any()) }
         verify(exactly = 1) { mockRepository.deleteByIdIn(listOf(1L, 2L)) }
+    }
+
+    test("Should throw exception when ids list is empty when bulk updating") {
+        //  ARRANGE
+        val ids = emptyList<Long>()
+
+        //  ACT
+        val exception =
+            shouldThrow<IllegalArgumentException> {
+                service.bulkUpdateTodos(ids, any(), any())
+            }
+
+        //  ASSERT
+        exception.message shouldBe "Ids cannot be empty!"
+
+        //  VERIFY
+        verify(exactly = 0) { mockRepository.updateByIdIn(ids, any(), any()) }
+    }
+
+    test("Should throw exception when todo not found") {
+        //  ARRANGE
+        val ids = listOf(1L)
+
+        every { mockRepository.findById(1L) } returns Optional.empty()
+
+        //  ACT
+        val exception =
+            shouldThrow<TodoNotFoundException> {
+                service.bulkUpdateTodos(ids, any(), any())
+            }
+
+        //  ASSERT
+        exception.message shouldBe "Todo with id: 1 not found"
+
+        //  VERIFY
+        verify(exactly = 1) { mockRepository.findById(1L) }
+        verify(exactly = 0) { mockRepository.updateByIdIn(ids, any(), any()) }
+    }
+
+    test("Should return unchanged models when both params are null") {
+        //  ARRANGE
+        val ids = listOf(1L, 2L)
+        val entity1 = TestDataBuilder.entitySavedDefault()
+        val entity2 = TestDataBuilder.entitySavedDefault(id = 2L)
+
+        every { mockRepository.findById(1L) } returns Optional.of(entity1)
+        every { mockRepository.findById(2L) } returns Optional.of(entity2)
+
+        //  ACT
+        val result = service.bulkUpdateTodos(ids, null, null)
+
+        //  ASSERT
+        result[0].updatedAt.toString() shouldBe entity1.updatedAt.toString()
+        result[1].updatedAt.toString() shouldBe entity2.updatedAt.toString()
+
+        //  VERIFY
+        verify(exactly = 0) { mockRepository.updateByIdIn(ids, null, null) }
+        verify(exactly = 0) { mockRepository.findAllById(ids) }
+    }
+
+    test("Should call updateByIdIn when completed is provided") {
+        //  ARRANGE
+        val ids = listOf(1L, 2L)
+        val entity1 = TestDataBuilder.entitySavedDefault()
+        val entity2 = TestDataBuilder.entitySavedDefault(id = 2L)
+        val updatedAt = LocalDateTime.now()
+        val updatedEntity1 = TestDataBuilder.entitySavedDefault(completed = true, updatedAt = updatedAt)
+        val updatedEntity2 = TestDataBuilder.entitySavedDefault(id = 2L, completed = true, updatedAt = updatedAt)
+
+        every { mockRepository.findById(1L) } returns Optional.of(entity1)
+        every { mockRepository.findById(2L) } returns Optional.of(entity2)
+        every { mockRepository.updateByIdIn(any(), any(), any()) } returns 2
+        every { mockRepository.findAllById(ids) } returns listOf(updatedEntity1, updatedEntity2)
+
+        //  ACT
+        val result = service.bulkUpdateTodos(ids, true, null)
+
+        //  ASSERT
+        result.all { it.completed } shouldBe true
+
+        //  VERIFY
+        verify(exactly = 2) { mockRepository.findById(any()) }
+        verify(exactly = 1) { mockRepository.updateByIdIn(ids, true, null) }
+        verify(exactly = 1) { mockRepository.findAllById(ids) }
+    }
+
+    test("Should call updateByIdIn when both params provided") {
+        //  ARRANGE
+        val ids = listOf(1L, 2L)
+        val entity1 = TestDataBuilder.entitySavedDefault()
+        val entity2 = TestDataBuilder.entitySavedDefault(id = 2L)
+        val updatedAt = LocalDateTime.now()
+        val updatedEntity1 =
+            TestDataBuilder.entitySavedDefault(
+                completed = true,
+                priority = Priority.HIGH,
+                updatedAt = updatedAt,
+            )
+        val updatedEntity2 =
+            TestDataBuilder.entitySavedDefault(
+                id = 2L,
+                completed = true,
+                priority = Priority.HIGH,
+                updatedAt = updatedAt,
+            )
+
+        every { mockRepository.findById(1L) } returns Optional.of(entity1)
+        every { mockRepository.findById(2L) } returns Optional.of(entity2)
+        every { mockRepository.updateByIdIn(any(), any(), any()) } returns 2
+        every { mockRepository.findAllById(ids) } returns listOf(updatedEntity1, updatedEntity2)
+
+        //  ACT
+        val result = service.bulkUpdateTodos(ids, true, Priority.HIGH)
+
+        //  ASSERT
+        result.all { it.completed } shouldBe true
+        result.all { it.priority == Priority.HIGH } shouldBe true
+
+        //  VERIFY
+        verify(exactly = 2) { mockRepository.findById(any()) }
+        verify(exactly = 1) { mockRepository.updateByIdIn(ids, true, Priority.HIGH) }
+        verify(exactly = 1) { mockRepository.findAllById(ids) }
+    }
+
+    test("Should remove duplicates from ids list") {
+        //  ARRANGE
+        val ids = listOf(1L, 2L, 1L)
+        val entity1 = TestDataBuilder.entitySavedDefault()
+        val entity2 = TestDataBuilder.entitySavedDefault(id = 2L)
+        val updatedAt = LocalDateTime.now()
+        val updatedEntity1 = TestDataBuilder.entitySavedDefault(completed = true, updatedAt = updatedAt)
+        val updatedEntity2 = TestDataBuilder.entitySavedDefault(id = 2L, completed = true, updatedAt = updatedAt)
+
+        every { mockRepository.findById(1L) } returns Optional.of(entity1)
+        every { mockRepository.findById(2L) } returns Optional.of(entity2)
+        every { mockRepository.updateByIdIn(any(), any(), any()) } returns 2
+        every { mockRepository.findAllById(any()) } returns listOf(updatedEntity1, updatedEntity2)
+
+        //  ACT
+        val result = service.bulkUpdateTodos(ids, true, null)
+
+        //  ASSERT
+        result.size shouldBe 2
+        result.all { it.completed } shouldBe true
+
+        //  VERIFY
+        verify { mockRepository.updateByIdIn(listOf(1L, 2L), any(), any()) }
     }
 })

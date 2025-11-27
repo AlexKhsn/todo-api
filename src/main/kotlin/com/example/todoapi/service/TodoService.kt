@@ -84,8 +84,9 @@ class TodoService(
     @Transactional
     fun bulkDeleteTodos(ids: List<Long>): Int {
         if (ids.isEmpty()) throw IllegalArgumentException("Ids must not be empty!")
-        ids.forEach { getTodoById(it) }
-        return todoRepository.deleteByIdIn(ids)
+        val uniqueIds = ids.distinct()
+        uniqueIds.forEach { getTodoById(it) }
+        return todoRepository.deleteByIdIn(uniqueIds)
     }
 
     fun toggleComplete(id: Long): TodoModel {

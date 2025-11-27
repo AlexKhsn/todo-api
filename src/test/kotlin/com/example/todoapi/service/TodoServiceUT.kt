@@ -830,4 +830,25 @@ class TodoServiceUT : FunSpec({
         verify(exactly = 3) { mockRepository.findById(any()) }
         verify(exactly = 1) { mockRepository.deleteByIdIn(ids) }
     }
+
+    test("Should remove duplicates before deleting") {
+        //  ARRANGE
+        val duplicatedIds = listOf(1L, 2L, 1L)
+        val entity1 = TestDataBuilder.entitySavedDefault()
+        val entity2 = TestDataBuilder.entitySavedDefault(id = 2L)
+
+        every { mockRepository.findById(1L) } returns Optional.of(entity1)
+        every { mockRepository.findById(2L) } returns Optional.of(entity2)
+        every { mockRepository.deleteByIdIn(any()) } returns 2
+
+        //  ACT
+        val result = service.bulkDeleteTodos(duplicatedIds)
+
+        //  ASSERT
+        result shouldBe 2
+
+        //  VERIFY
+        verify(exactly = 2) { mockRepository.findById(any()) }
+        verify(exactly = 1) { mockRepository.deleteByIdIn(listOf(1L, 2L)) }
+    }
 })

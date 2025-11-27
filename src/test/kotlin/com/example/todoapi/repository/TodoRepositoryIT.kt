@@ -410,10 +410,6 @@ class TodoRepositoryIT {
     @Test
     fun `Should delete nothing when ids not exist`() {
         //  ARRANGE
-        println("=== TEST START: Should delete nothing ===")
-        println("Count at start: ${repository.count()}")
-        println("All IDs in DB: ${repository.findAll().map { it.id }}")
-
         val entities =
             listOf(
                 TestDataBuilder.entityToSaveDefault(),
@@ -425,11 +421,7 @@ class TodoRepositoryIT {
         entities.forEach { entityManager.persist(it) }
         entityManager.flush()
 
-        println("Count after adding 5: ${repository.count()}")
-        println("All IDs after adding: ${repository.findAll().map { it.id }}")
-
         val nonExistingIds = listOf(12L, 23L, 43L)
-        println("Trying to delete IDs: $nonExistingIds")
 
         //  ACT
         val result = repository.deleteByIdIn(nonExistingIds)

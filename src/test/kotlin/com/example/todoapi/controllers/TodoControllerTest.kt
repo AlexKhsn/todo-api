@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -230,6 +231,90 @@ class TodoControllerTest : FunSpec() {
 
             //  VERIFY
             verify(todoService).getTodos(eq(false), eq("work"), eq(Priority.MEDIUM), any())
+        }
+
+        test("DELETE /api/todos/bulk?ids=1,2,3 should delete multiple todos and return count") {
+            //  ARRANGE
+            val ids = listOf(1L, 2L, 3L)
+
+            whenever(todoService.bulkDeleteTodos(ids)).thenReturn(3)
+
+            //  ACT & ASSERT
+            mvc.perform(delete("/api/todos/bulk?ids=1,2,3"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.deleted").value(3))
+        }
+
+        test("DELETE /api/todos/bulk with empty ids should return 400") {
+            //  ARRANGE
+            val ids = emptyList<Long>()
+
+            whenever(todoService.bulkDeleteTodos(ids)).thenThrow(IllegalArgumentException::class.java)
+
+            //  ACT & ASSERT
+            mvc.perform(delete("/api/todos/bulk?ids="))
+                .andExpect(status().isBadRequest)
+        }
+
+        test("DELETE /api/todos/bulk?ids=1,999 when one id not found should return 404") {
+            //  ARRANGE
+            val ids = listOf(1L, 999L)
+            whenever(todoService.bulkDeleteTodos(ids)).thenThrow(CustomExceptions.TodoNotFoundException(999))
+
+            //  ACT & ASSERT
+            mvc.perform(delete("/api/todos/bulk?ids=1,999"))
+                .andExpect(status().isNotFound)
+        }
+
+        test("DELETE /api/todos/bulk without ids parameter should return 400") {
+            //  ARRANGE
+            whenever(todoService.bulkDeleteTodos(any())).thenThrow(IllegalArgumentException::class.java)
+
+            //  ACT & ASSERT
+            mvc.perform(delete("/api/todos/bulk"))
+                .andExpect(status().isBadRequest)
+        }
+
+        test("DELETE /api/todos/bulk should pass ids as-is to service including duplicates") {
+            //  ARRANGE
+            val ids = listOf(1L, 2L, 1L)
+            whenever(todoService.bulkDeleteTodos(ids)).thenReturn(2)
+
+            //  ACT & ASSERT
+            mvc.perform(delete("/api/todos/bulk?ids=1,2,1"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.deleted").value(2))
+
+            //  VERIFY
+            verify(todoService).bulkDeleteTodos(listOf(1, 2, 1))
+        }
+
+        test("DELETE /api/todos/bulk?ids=1&ids=2&ids=3 should parse multiple params") {
+            //  ARRANGE
+            val ids = listOf(1L, 2L, 3L)
+            whenever(todoService.bulkDeleteTodos(ids)).thenReturn(3)
+
+            //  ACT & ASSERT
+            mvc.perform(delete("/api/todos/bulk?ids=1&ids=2&ids=3"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.deleted").value(3))
+        }
+
+        test("DELETE /api/todos/bulk should verify correct service method call") {
+            //  ARRANGE
+            val captor = argumentCaptor<List<Long>>()
+
+            whenever(todoService.bulkDeleteTodos(any())).thenReturn(3)
+
+            //  ACT
+            mvc.perform(delete("/api/todos/bulk?ids=1,2,3"))
+                .andExpect(status().isOk)
+
+            //  VERIFY
+            verify(todoService).bulkDeleteTodos(captor.capture())
+            val capturedIds = captor.firstValue
+            capturedIds shouldBe listOf(1L, 2L, 3L)
+            capturedIds::class.java.simpleName shouldBe "ArrayList"
         }
     }
 }

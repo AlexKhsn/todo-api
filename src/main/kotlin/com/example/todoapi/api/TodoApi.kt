@@ -102,4 +102,18 @@ interface TodoApi {
         @RequestParam(required = true)
         ids: List<Long>,
     ): ResponseEntity<Map<String, Int>>
+
+    @Operation(
+        summary = "Bulk update tasks",
+        description = "Update multiple tasks by their IDs (completed / priority)",
+    )
+    @PutMapping("/bulk")
+    fun bulkUpdateTodos(
+        @RequestParam(required = true)
+        ids: List<Long>,
+        @RequestParam
+        completed: Boolean? = null,
+        @RequestParam
+        priority: Priority? = null,
+    ): ResponseEntity<List<TodoResponse>>
 }

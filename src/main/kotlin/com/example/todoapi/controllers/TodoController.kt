@@ -59,4 +59,13 @@ class TodoController(
         val deleteCount = todoService.bulkDeleteTodos(ids)
         return ResponseEntity.status(HttpStatus.OK).body(mapOf("deleted" to deleteCount))
     }
+
+    override fun bulkUpdateTodos(
+        ids: List<Long>,
+        completed: Boolean?,
+        priority: Priority?,
+    ): ResponseEntity<List<TodoResponse>> {
+        val updatedModels = todoService.bulkUpdateTodos(ids, completed, priority)
+        return ResponseEntity.status(HttpStatus.OK).body(updatedModels.map { it.toResponse() })
+    }
 }

@@ -30,4 +30,18 @@ interface TodoRepository : JpaRepository<Todo, Long> {
     fun deleteByIdIn(
         @Param("ids") ids: List<Long>,
     ): Int
+
+    @Modifying(clearAutomatically = true)
+    @Query(
+        "UPDATE Todo t SET " +
+            "t.completed = COALESCE(:completed, t.completed), " +
+            "t.priority = COALESCE(:priority, t.priority), " +
+            "t.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE t.id IN :ids",
+    )
+    fun updateByIdIn(
+        @Param("ids") ids: List<Long>,
+        @Param("completed") completed: Boolean?,
+        @Param("priority") priority: Priority?,
+    ): Int
 }

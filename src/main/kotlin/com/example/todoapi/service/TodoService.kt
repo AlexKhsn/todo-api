@@ -75,6 +75,21 @@ class TodoService(
         return updatedSavedEntity.toModel()
     }
 
+    @Transactional
+    fun bulkUpdateTodos(
+        ids: List<Long>,
+        completed: Boolean?,
+        priority: Priority?,
+    ): List<TodoModel> {
+        if (ids.isEmpty()) throw IllegalArgumentException("Ids cannot be empty!")
+        val uniqueIds = ids.distinct()
+        val foundModels = uniqueIds.map { getTodoById(it) }
+        if (completed == null && priority == null) return foundModels
+        todoRepository.updateByIdIn(uniqueIds, completed, priority)
+        val updatedModels = todoRepository.findAllById(uniqueIds).map { it.toModel() }
+        return updatedModels
+    }
+
     fun deleteTodo(id: Long): TodoModel {
         val foundModel = getTodoById(id)
         todoRepository.deleteById(id)

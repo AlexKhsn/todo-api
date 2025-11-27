@@ -3,6 +3,7 @@ package com.example.todoapi.repository
 import com.example.todoapi.entity.Priority
 import com.example.todoapi.testUtil.TestDataBuilder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -430,5 +431,161 @@ class TodoRepositoryIT {
         //  ASSERT
         result shouldBe 0
         repository.count() shouldBe 5
+    }
+
+    @Test
+    fun `Should update only completed field for multiple todos`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val ids = entities.map { it.id!! }
+
+        //  ACT
+        val result = repository.updateByIdIn(ids, true, null)
+
+        //  ASSERT
+        entityManager.flush()
+        entityManager.clear()
+        val updated = repository.findAllById(ids)
+
+        result shouldBe 3
+        updated.all { it.completed && it.priority == Priority.MEDIUM } shouldBe true
+    }
+
+    @Test
+    fun `Should update only priority field for multiple todos`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val ids = entities.map { it.id!! }
+
+        //  ACT
+        val result = repository.updateByIdIn(ids, null, Priority.HIGH)
+
+        //  ASSERT
+        entityManager.flush()
+        entityManager.clear()
+        val updated = repository.findAllById(ids)
+
+        result shouldBe 3
+        updated.all { !it.completed && it.priority == Priority.HIGH } shouldBe true
+    }
+
+    @Test
+    fun `Should update both completed and priority fields`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val ids = entities.map { it.id!! }
+
+        //  ACT
+        val result = repository.updateByIdIn(ids, true, Priority.HIGH)
+
+        //  ASSERT
+        entityManager.flush()
+        entityManager.clear()
+        val updated = repository.findAllById(ids)
+
+        result shouldBe 3
+        updated.all { it.completed && it.priority == Priority.HIGH } shouldBe true
+    }
+
+    @Test
+    fun `Should update only specified todos by ids`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val ids = entities.take(3).map { it.id!! }
+
+        //  ACT
+        val result = repository.updateByIdIn(ids, true, null)
+
+        //  ASSERT
+        entityManager.flush()
+        entityManager.clear()
+        val refreshedEntities = repository.findAll()
+        result shouldBe 3
+        refreshedEntities.count { it.completed } shouldBe 3
+        refreshedEntities.count { !it.completed } shouldBe 2
+    }
+
+    @Test
+    fun `Should update updatedAt field when updating todos`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val savedEntities = repository.findAllById(entities.map { it.id!! })
+        val ids = savedEntities.map { it.id!! }
+
+        //  ACT
+        val result = repository.updateByIdIn(ids, true, null)
+
+        //  ASSERT
+        entityManager.flush()
+        entityManager.clear()
+        val updated = repository.findAllById(ids)
+
+        updated.forEachIndexed { index, todo ->
+            todo.updatedAt.toString() shouldNotBe savedEntities[index].updatedAt.toString()
+        }
+    }
+
+    @Test
+    fun `Should not update when both parameters are null`() {
+        //  ARRANGE
+        val entities =
+            listOf(
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+                TestDataBuilder.entityToSaveDefault(),
+            )
+        entities.forEach { entityManager.persist(it) }
+        entityManager.flush()
+        val savedEntities = repository.findAllById(entities.map { it.id!! })
+        val ids = savedEntities.map { it.id!! }
+
+        //  ACT
+        val result = repository.updateByIdIn(ids, null, null)
+
+        //  ASSERT
+        entityManager.flush()
+        entityManager.clear()
+        val updated = repository.findAllById(ids)
+
+        updated.forEachIndexed { index, todo ->
+            todo.updatedAt.toString() shouldBe savedEntities[index].updatedAt.toString()
+        }
     }
 }

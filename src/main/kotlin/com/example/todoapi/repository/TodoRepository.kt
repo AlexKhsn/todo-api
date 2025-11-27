@@ -36,7 +36,8 @@ interface TodoRepository : JpaRepository<Todo, Long> {
         "UPDATE Todo t SET " +
             "t.completed = COALESCE(:completed, t.completed), " +
             "t.priority = COALESCE(:priority, t.priority), " +
-            "t.updatedAt = CURRENT_TIMESTAMP " +
+            "t.updatedAt = CASE WHEN :completed IS NOT NULL OR :priority IS NOT NULL " +
+            "THEN CURRENT_TIMESTAMP ELSE t.updatedAt END " +
             "WHERE t.id IN :ids",
     )
     fun updateByIdIn(

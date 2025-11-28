@@ -7,6 +7,8 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinTable
+import jakarta.persistence.ManyToMany
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
@@ -29,4 +31,7 @@ class Todo(
     val createdAt: LocalDateTime = LocalDateTime.now(),
     @Column(nullable = false)
     var updatedAt: LocalDateTime = createdAt,
+    @ManyToMany
+    @JoinTable(name = "todo_tag")
+    val tags: MutableSet<Tag> = mutableSetOf(),
 )

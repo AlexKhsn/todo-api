@@ -9,6 +9,7 @@ import com.example.todoapi.testUtil.TestDataBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import java.time.LocalDateTime
 import org.hibernate.query.Page.page
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
@@ -27,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -315,6 +317,153 @@ class TodoControllerTest : FunSpec() {
             val capturedIds = captor.firstValue
             capturedIds shouldBe listOf(1L, 2L, 3L)
             capturedIds::class.java.simpleName shouldBe "ArrayList"
+        }
+
+        test("PUT /api/todos/bulk should update todos and return list") {
+            //  ARRANGE
+            val ids = listOf(1L, 2L, 3L)
+            val updatedModels =
+                listOf(
+                    TestDataBuilder.entitySavedDefault(completed = true, priority = Priority.HIGH).toModel(),
+                    TestDataBuilder.entitySavedDefault(id = 2L, completed = true, priority = Priority.HIGH).toModel(),
+                    TestDataBuilder.entitySavedDefault(id = 3L, completed = true, priority = Priority.HIGH).toModel(),
+                )
+
+            whenever(todoService.bulkUpdateTodos(ids, true, Priority.HIGH)).thenReturn(updatedModels)
+
+            //  ACT & ASSERT
+            mvc.perform(put("/api/todos/bulk?ids=1,2,3&completed=true&priority=HIGH"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.size()").value(3))
+
+            //  VERIFY
+            verify(todoService).bulkUpdateTodos(ids, true, Priority.HIGH)
+        }
+
+        test("PUT /api/todos/bulk with only completed param") {
+            //  ARRANGE
+            val ids = listOf(1L, 2L, 3L)
+            val updatedModels =
+                listOf(
+                    TestDataBuilder.entitySavedDefault(completed = true).toModel(),
+                    TestDataBuilder.entitySavedDefault(id = 2L, completed = true).toModel(),
+                    TestDataBuilder.entitySavedDefault(id = 3L, completed = true).toModel(),
+                )
+
+            whenever(todoService.bulkUpdateTodos(ids, true, null)).thenReturn(updatedModels)
+
+            //  ACT & ASSERT
+            mvc.perform(put("/api/todos/bulk?ids=1,2,3&completed=true"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.size()").value(3))
+
+            //  VERIFY
+            verify(todoService).bulkUpdateTodos(ids, true, null)
+        }
+
+        test("PUT /api/todos/bulk with only priority param") {
+            //  ARRANGE
+            val ids = listOf(1L, 2L, 3L)
+            val updatedModels =
+                listOf(
+                    TestDataBuilder.entitySavedDefault(priority = Priority.HIGH).toModel(),
+                    TestDataBuilder.entitySavedDefault(id = 2L, priority = Priority.HIGH).toModel(),
+                    TestDataBuilder.entitySavedDefault(id = 3L, priority = Priority.HIGH).toModel(),
+                )
+
+            whenever(todoService.bulkUpdateTodos(ids, null, Priority.HIGH)).thenReturn(updatedModels)
+
+            //  ACT & ASSERT
+            mvc.perform(put("/api/todos/bulk?ids=1,2,3&priority=HIGH"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.size()").value(3))
+
+            //  VERIFY
+            verify(todoService).bulkUpdateTodos(ids, null, Priority.HIGH)
+        }
+
+        test("PUT /api/todos/bulk without update params returns unchanged") {
+            //  ARRANGE
+            val ids = listOf(1L, 2L, 3L)
+            val updatedModels =
+                listOf(
+                    TestDataBuilder.entitySavedDefault().toModel(),
+                    TestDataBuilder.entitySavedDefault(id = 2L).toModel(),
+                    TestDataBuilder.entitySavedDefault(id = 3L).toModel(),
+                )
+
+            whenever(todoService.bulkUpdateTodos(ids, null, null)).thenReturn(updatedModels)
+
+            //  ACT & ASSERT
+            mvc.perform(put("/api/todos/bulk?ids=1,2,3"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$[0].completed").value(false))
+                .andExpect(jsonPath("$[0].priority").value("MEDIUM"))
+
+            //  VERIFY
+            verify(todoService).bulkUpdateTodos(ids, null, null)
+        }
+
+        test("PUT /api/todos/bulk without ids should return 400") {
+            //  ACT & ASSERT
+            mvc.perform(put("/api/todos/bulk"))
+                .andExpect(status().isBadRequest)
+        }
+
+        test("PUT /api/todos/bulk with empty ids should return 400") {
+            //  ARRANGE
+            val ids = emptyList<Long>()
+
+            whenever(
+                todoService.bulkUpdateTodos(ids, null, null),
+            ).thenThrow(IllegalArgumentException("Ids cannot be empty!"))
+
+            //  ACT & ASSERT
+            mvc.perform(put("/api/todos/bulk?ids="))
+                .andExpect(status().isBadRequest)
+                .andExpect(jsonPath("$.message").value("Ids cannot be empty!"))
+
+            //  VERIFY
+            verify(todoService).bulkUpdateTodos(ids, null, null)
+        }
+
+        test("PUT /api/todos/bulk with non-existing id should return 404") {
+            //  ARRANGE
+            val ids = listOf(1L, 2L)
+
+            whenever(todoService.bulkUpdateTodos(ids, null, null)).thenThrow(CustomExceptions.TodoNotFoundException(2))
+
+            //  ACT & ASSERT
+            mvc.perform(put("/api/todos/bulk?ids=1,2"))
+                .andExpect(status().isNotFound)
+                .andExpect(jsonPath("$.message").value("Todo with id: 2 not found"))
+
+            //  VERIFY
+            verify(todoService).bulkUpdateTodos(ids, null, null)
+        }
+
+        test("PUT /api/todos/bulk?ids=1,2 should parse ids correctly") {
+            //  ARRANGE
+            val ids = listOf(1L, 2L)
+            val captor = argumentCaptor<List<Long>>()
+            val updatedAt = LocalDateTime.now()
+            val updatedModels =
+                listOf(
+                    TestDataBuilder.entitySavedDefault(completed = true, updatedAt = updatedAt),
+                    TestDataBuilder.entitySavedDefault(id = 2L, completed = true, updatedAt = updatedAt),
+                ).map { it.toModel() }
+
+            whenever(todoService.bulkUpdateTodos(ids, true, null)).thenReturn(updatedModels)
+
+            //  ACT & ASSERT
+            mvc.perform(put("/api/todos/bulk?ids=1,2&completed=true"))
+                .andExpect(status().isOk)
+
+            //  VERIFY
+            verify(todoService).bulkUpdateTodos(captor.capture(), eq(true), eq(null))
+            val capturedIds = captor.firstValue
+            capturedIds.size shouldBe 2
+            capturedIds::class.simpleName shouldBe "ArrayList"
         }
     }
 }
